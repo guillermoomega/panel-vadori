@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Panel Vadori</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+<meta name="theme-color" content="#0f766e" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Panel Vadori</h1>
+  <span id="fecha-hoy" class="topbar-fecha"></span>
+</header>
+
+<main id="app">
+  <section id="view-calendario" class="view" hidden>
+    <div class="view-toolbar">
+      <div id="calendario-estado" class="estado-msg"></div>
+    </div>
+    <div id="calendar"></div>
+  </section>
+
+  <section id="view-hoy" class="view" hidden>
+    <div id="hoy-estado" class="estado-msg"></div>
+    <div id="hoy-content"></div>
+  </section>
+
+  <section id="view-limpieza" class="view" hidden>
+    <div id="limpieza-estado" class="estado-msg"></div>
+    <div id="limpieza-grid" class="unidades-grid"></div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button type="button" class="tab-btn" data-view="hoy">
+    <span class="tab-icon">☀</span>
+    <span>Hoy</span>
+  </button>
+  <button type="button" class="tab-btn" data-view="calendario">
+    <span class="tab-icon">▦</span>
+    <span>Calendario</span>
+  </button>
+  <button type="button" class="tab-btn" data-view="limpieza">
+    <span class="tab-icon">✓</span>
+    <span>Limpieza</span>
+  </button>
+</nav>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="js/views/hoy.js"></script>
+<script src="js/views/limpieza.js"></script>
+<script src="js/views/calendario.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
