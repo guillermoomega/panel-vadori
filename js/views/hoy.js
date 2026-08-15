@@ -2,6 +2,8 @@ const ViewHoy = (() => {
   const elEstado = () => document.getElementById("hoy-estado");
   const elContent = () => document.getElementById("hoy-content");
 
+  const turnosHoyAbiertos = new Set();
+
   let listenersAttached = false;
   function attachListeners() {
     if (listenersAttached) return;
@@ -21,7 +23,13 @@ const ViewHoy = (() => {
       const card = ev.target.closest(".card-clickable");
       if (!card) return;
       const detalle = card.querySelector(".card-detail");
-      if (detalle) detalle.hidden = !detalle.hidden;
+      if (!detalle) return;
+      detalle.hidden = !detalle.hidden;
+      const hora = card.dataset.hora;
+      if (hora) {
+        if (detalle.hidden) turnosHoyAbiertos.delete(hora);
+        else turnosHoyAbiertos.add(hora);
+      }
     });
   }
 
@@ -114,33 +122,19 @@ const ViewHoy = (() => {
       </div>`;
   }
 
-  function cardMesaHoy(m) {
-    const subPartes = [`${m.personas ?? "?"} ad.`];
-    if (m.ninios) subPartes.push(`${m.ninios} niños`);
-    const sub = subPartes.map(Utils.escapeHtml).join(" · ");
-    const puedeRecibir = m.estado !== "Recibida" && m.estado !== "Cancelada";
-
-    const detalle = m.notas && m.notas.trim()
-      ? `<div class="card-detail"><div class="card-detail-label">Observaciones</div><div>${Utils.escapeHtml(m.notas)}</div></div>`
-      : "";
-
-    const recibir = puedeRecibir
-      ? `<button type="button" class="btn-recibir" data-reserva-id="${Utils.escapeHtml(m.id)}" title="Marcar como recibida">✓</button>`
-      : "";
+  function filaMesaHoy(m) {
+    const partes = [`${m.personas ?? "?"} ad.`];
+    if (m.ninios) partes.push(`${m.ninios} niños`);
+    if (m.notas && m.notas.trim()) partes.push(m.notas);
+    const sub = partes.map(Utils.escapeHtml).join(" · ");
 
     return `
-      <div class="card">
-        <div class="card-row">
-          <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(m.hora || "Sin hora")} — ${Utils.escapeHtml(m.nombre || "Sin nombre")}</div>
-            <div class="card-sub">${sub}</div>
-          </div>
-          <div class="card-meta card-meta-mesa">
-            <span class="badge ${Utils.badgeClaseReserva(m.estado)}">${Utils.escapeHtml(m.estado || "—")}</span>
-            ${recibir}
-          </div>
+      <div class="mesa-row">
+        <div class="mesa-row-info">
+          <div>${Utils.escapeHtml(m.nombre || "Sin nombre")}</div>
+          <div class="mesa-row-sub">${sub}</div>
         </div>
-        ${detalle}
+        <button type="button" class="btn-recibir" data-reserva-id="${Utils.escapeHtml(m.id)}" title="Marcar como recibida">✓</button>
       </div>`;
   }
 
@@ -177,6 +171,27 @@ const ViewHoy = (() => {
       </div>`;
   }
 
+  function cardTurnoHoy(t) {
+    const pendientes = t.reservas.filter(r => r.estado !== "Recibida");
+    const filas = pendientes.length
+      ? pendientes.map(filaMesaHoy).join("")
+      : `<div class="empty-msg">Todas recibidas.</div>`;
+    const abierto = turnosHoyAbiertos.has(t.hora);
+
+    return `
+      <div class="card card-clickable" data-hora="${Utils.escapeHtml(t.hora)}">
+        <div class="card-row">
+          <div class="card-main">
+            <div class="card-title">${Utils.escapeHtml(t.hora)} <span class="card-info-icon">ⓘ</span></div>
+          </div>
+          <div class="card-meta">
+            <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
+          </div>
+        </div>
+        <div class="card-detail"${abierto ? "" : " hidden"}>${filas}</div>
+      </div>`;
+  }
+
   function seccion(titulo, items, renderCard, vacioMsg) {
     if (!items.length) {
       return `<div class="section-title">${titulo}</div><div class="empty-msg">${vacioMsg}</div>`;
@@ -196,15 +211,12 @@ const ViewHoy = (() => {
       const unidades = limpieza.unidades || [];
       const mesasManana = (rango.mesas || []).filter(m => m.fecha === manana);
       const mesasPasado = (rango.mesas || []).filter(m => m.fecha === pasado);
-      const mesasHoyPendientes = (data.mesas_hoy || [])
-        .filter(m => m.estado !== "Cancelada" && m.estado !== "Recibida")
-        .sort((a, b) => (a.hora || "").localeCompare(b.hora || ""));
 
       elEstado().textContent = "";
       elContent().innerHTML =
         seccion("Check-ins de hoy", data.checkins, r => cardReserva(r, unidades), "Sin check-ins hoy.") +
         seccion("Check-outs de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin check-outs hoy.") +
-        seccion("Mesas de hoy", mesasHoyPendientes, cardMesaHoy, "Sin reservas de mesa pendientes de recibir hoy.") +
+        seccion("Mesas de hoy", agruparPorTurno(data.mesas_hoy), cardTurnoHoy, "Sin reservas de mesa hoy.") +
         seccion("Mesas de mañana", agruparPorTurno(mesasManana), cardTurno, "Sin reservas de mesa mañana.") +
         seccion("Mesas de pasado mañana", agruparPorTurno(mesasPasado), cardTurno, "Sin reservas de mesa pasado mañana.");
     } catch (err) {

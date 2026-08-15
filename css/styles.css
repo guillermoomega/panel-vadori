@@ -244,10 +244,23 @@ body {
   font-size: 0.95rem;
 }
 
-.card-meta-mesa {
+.mesa-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+}
+.mesa-row + .mesa-row {
+  border-top: 1px solid var(--border);
+}
+
+.mesa-row-info { min-width: 0; }
+
+.mesa-row-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .btn-recibir {
