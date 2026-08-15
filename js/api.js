@@ -19,9 +19,29 @@ const Api = (() => {
     return res.json();
   }
 
+  async function post(path, body = {}) {
+    const res = await fetch(window.PANEL_CONFIG.apiBase + path, {
+      method: "POST",
+      headers: {
+        "X-Panel-Key": window.PANEL_CONFIG.panelKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (res.status === 403) {
+      throw new Error("Acceso rechazado (403) — clave del panel inválida o faltante.");
+    }
+    if (!res.ok) {
+      throw new Error(`Error del servidor (${res.status})`);
+    }
+    return res.json();
+  }
+
   return {
     ocupacion: (desde, hasta) => get("/ocupacion", { desde, hasta }),
     hoy: () => get("/hoy"),
-    limpieza: () => get("/limpieza")
+    limpieza: () => get("/limpieza"),
+    asignar: (reserva_id, unidad_id) => post("/asignar", { reserva_id, unidad_id })
   };
 })();

@@ -6,7 +6,13 @@ const ViewHoy = (() => {
   function attachListeners() {
     if (listenersAttached) return;
     listenersAttached = true;
-    elContent().addEventListener("click", (ev) => {
+    elContent().addEventListener("click", async (ev) => {
+      const btnAsignar = ev.target.closest(".btn-asignar");
+      if (btnAsignar) {
+        await handleAsignar(btnAsignar);
+        return;
+      }
+      if (ev.target.closest(".card-asignar")) return;
       const card = ev.target.closest(".card-clickable");
       if (!card) return;
       const detalle = card.querySelector(".card-detail");
@@ -14,7 +20,32 @@ const ViewHoy = (() => {
     });
   }
 
-  function cardReserva(r) {
+  async function handleAsignar(btn) {
+    const reservaId = btn.dataset.reservaId;
+    const wrapper = btn.closest(".card-asignar");
+    const select = wrapper.querySelector(".select-unidad");
+    const unidadId = select.value;
+    if (!unidadId) {
+      select.focus();
+      return;
+    }
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    select.disabled = true;
+    btn.textContent = "Asignando…";
+    try {
+      const res = await Api.asignar(reservaId, unidadId);
+      if (!res.ok) throw new Error(res.error || "No se pudo asignar la unidad.");
+      await render();
+    } catch (err) {
+      btn.disabled = false;
+      select.disabled = false;
+      btn.textContent = textoOriginal;
+      alert(err.message);
+    }
+  }
+
+  function cardReserva(r, unidades = []) {
     const estado = Utils.estadoReservaSuite(r);
     const unidad = r.sin_asignar ? "sin asignar" : (r.unidad || "—");
     const subPartes = [unidad];
@@ -36,6 +67,16 @@ const ViewHoy = (() => {
       ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
+    const asignar = r.sin_asignar
+      ? `<div class="card-asignar">
+          <select class="select-unidad">
+            <option value="">Elegir unidad…</option>
+            ${unidades.map(u => `<option value="${Utils.escapeHtml(u.id)}">${Utils.escapeHtml(u.nombre)}${u.estado && u.estado !== "Lista" ? " · " + Utils.escapeHtml(u.estado) : ""}</option>`).join("")}
+          </select>
+          <button type="button" class="btn-asignar" data-reserva-id="${Utils.escapeHtml(r.id)}">Asignar</button>
+        </div>`
+      : "";
+
     return `
       <div class="card${tieneDetalle ? " card-clickable" : ""}">
         <div class="card-row">
@@ -48,6 +89,7 @@ const ViewHoy = (() => {
           </div>
         </div>
         ${detalle}
+        ${asignar}
       </div>`;
   }
 
@@ -97,11 +139,12 @@ const ViewHoy = (() => {
     elEstado().classList.remove("error");
     elContent().innerHTML = "";
     try {
-      const data = await Api.hoy();
+      const [data, limpieza] = await Promise.all([Api.hoy(), Api.limpieza()]);
+      const unidades = limpieza.unidades || [];
       elEstado().textContent = "";
       elContent().innerHTML =
-        seccion("Check-ins de hoy", data.checkins, cardReserva, "Sin check-ins hoy.") +
-        seccion("Check-outs de hoy", data.checkouts, cardReserva, "Sin check-outs hoy.") +
+        seccion("Check-ins de hoy", data.checkins, r => cardReserva(r, unidades), "Sin check-ins hoy.") +
+        seccion("Check-outs de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin check-outs hoy.") +
         seccion("Mesas de hoy", agruparPorTurno(data.mesas_hoy), cardTurno, "Sin reservas de mesa hoy.");
     } catch (err) {
       elEstado().textContent = err.message;
