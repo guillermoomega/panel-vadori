@@ -139,13 +139,19 @@ const ViewHoy = (() => {
     elEstado().classList.remove("error");
     elContent().innerHTML = "";
     try {
-      const [data, limpieza] = await Promise.all([Api.hoy(), Api.limpieza()]);
+      const manana = Utils.addDays(Utils.todayISO(), 1);
+      const pasado = Utils.addDays(Utils.todayISO(), 2);
+      const [data, limpieza, rango] = await Promise.all([Api.hoy(), Api.limpieza(), Api.ocupacion(manana, pasado)]);
       const unidades = limpieza.unidades || [];
+      const mesasManana = (rango.mesas || []).filter(m => m.fecha === manana);
+      const mesasPasado = (rango.mesas || []).filter(m => m.fecha === pasado);
       elEstado().textContent = "";
       elContent().innerHTML =
         seccion("Check-ins de hoy", data.checkins, r => cardReserva(r, unidades), "Sin check-ins hoy.") +
         seccion("Check-outs de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin check-outs hoy.") +
-        seccion("Mesas de hoy", agruparPorTurno(data.mesas_hoy), cardTurno, "Sin reservas de mesa hoy.");
+        seccion("Mesas de hoy", agruparPorTurno(data.mesas_hoy), cardTurno, "Sin reservas de mesa hoy.") +
+        seccion("Mesas de mañana", agruparPorTurno(mesasManana), cardTurno, "Sin reservas de mesa mañana.") +
+        seccion("Mesas de pasado mañana", agruparPorTurno(mesasPasado), cardTurno, "Sin reservas de mesa pasado mañana.");
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");

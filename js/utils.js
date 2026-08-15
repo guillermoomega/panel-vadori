@@ -22,6 +22,15 @@ const Utils = (() => {
     return `${d}/${m}`;
   }
 
+  function addDays(iso, n) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const date = new Date(y, m - 1, d + n);
+    const y2 = date.getFullYear();
+    const m2 = String(date.getMonth() + 1).padStart(2, "0");
+    const d2 = String(date.getDate()).padStart(2, "0");
+    return `${y2}-${m2}-${d2}`;
+  }
+
   // Estado de reserva de suite: deriva "Señada" sin que el backend invente el valor.
   function estadoReservaSuite(reserva) {
     if (reserva.estado === "Pendiente" && Number(reserva.monto_sena) > 0) return "Señada";
@@ -73,7 +82,7 @@ const Utils = (() => {
   }
 
   return {
-    todayISO, fechaLarga, fechaCorta,
+    todayISO, addDays, fechaLarga, fechaCorta,
     estadoReservaSuite, badgeClaseReserva,
     badgeClaseLimpieza, claseCardLimpieza,
     escapeHtml, formatMonto
