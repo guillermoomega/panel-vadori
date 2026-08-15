@@ -244,6 +244,27 @@ body {
   font-size: 0.95rem;
 }
 
+.card-meta-mesa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-recibir {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--ok);
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.btn-recibir:disabled { opacity: 0.6; cursor: default; }
+
 .empty-msg {
   color: var(--text-muted);
   font-size: 0.88rem;
