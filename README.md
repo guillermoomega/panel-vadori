@@ -6,7 +6,7 @@ Vanilla HTML/CSS/JS, sin build. Backend: 3 webhooks n8n (ver `../n8n vadori/docs
 
 ## Setup local
 
-1. Copiar `js/config.example.js` a `js/config.js` (gitignored, no se commitea) y completar `panelKey` con el valor real (pedirlo a Coco / ver memoria `project_panel_vadori`).
+1. `js/config.js` ya está commiteado con el valor real (ver nota de seguridad más abajo — se decidió subirlo). Si hace falta regenerarlo desde cero, copiar `js/config.example.js` y completar `panelKey`.
 2. Servir la carpeta con cualquier servidor estático (no funciona con `file://` por CORS/fetch). Por ejemplo:
    ```
    npx serve .
@@ -24,11 +24,11 @@ Vanilla HTML/CSS/JS, sin build. Backend: 3 webhooks n8n (ver `../n8n vadori/docs
 
 Sin service worker de caché de datos a propósito: mostrar información de reservas/limpieza desactualizada es peor que no tener modo offline. El `manifest.json` solo habilita "agregar a inicio" (icono + pantalla completa), no cachea las llamadas a la API.
 
-## Deploy (pendiente)
+## Deploy
 
-- Hosting: GitHub Pages.
-- Auth de acceso: Cloudflare Access delante del dominio (gatea quién puede *abrir* la app).
-- El header `X-Panel-Key` es una segunda capa en el backend (n8n rechaza con 403 si falta) — como el sitio es estático, ese secreto queda visible en el JS servido a cualquiera que pase el Access. Es un trade-off aceptado para v1: el riesgo real que cubre es que alguien encuentre la URL del webhook n8n sin pasar por el panel, no un actor malicioso dentro del staff.
+- Hosting: GitHub Pages (`panel.granvadori.com.ar`).
+- Auth de acceso: Cloudflare Access delante del dominio (gatea quién puede *abrir* la app, login por One-time PIN al email del staff).
+- `js/config.js` está commiteado al repo público con el valor real de `panelKey`. Decisión 2026-08-15: como el repo es público, cualquiera que mire el código fuente en GitHub puede ver la clave — pero como el sitio desplegado ya está detrás de Cloudflare Access, el header `X-Panel-Key` solo es una segunda capa en el backend (n8n rechaza con 403 si falta), no la barrera principal. El trade-off aceptado es el mismo de siempre: no protege contra el staff, dificulta que alguien la encuentre sin buscarla a propósito en el repo.
 - Íconos: `icons/icon.svg` es un placeholder (letra "V" sobre fondo teal, sin isologotipo — decisión v1 de identidad minimalista neutra). `apple-touch-icon` en iOS requiere PNG para funcionar de verdad en pantalla de inicio; si se quiere una instalación prolija en iPhone, generar `icon-192.png` / `icon-512.png` antes del deploy.
 
 ## Fuera de v1
