@@ -11,16 +11,24 @@ const ViewHoy = (() => {
     if (r.paquete) subPartes.push(r.paquete);
     const sub = subPartes.map(Utils.escapeHtml).join(" · ");
 
-    const tieneObs = !!(r.observaciones && r.observaciones.trim());
-    const detalle = tieneObs
-      ? `<div class="card-detail" hidden><div class="card-detail-label">Observaciones</div><div>${Utils.escapeHtml(r.observaciones)}</div></div>`
+    const filas = [];
+    if (r.tipo_unidad) filas.push(["Tipo de unidad", Utils.escapeHtml(r.tipo_unidad)]);
+    if (r.paquete) filas.push(["Paquete", Utils.escapeHtml(r.paquete)]);
+    if (r.costo !== null && r.costo !== undefined) filas.push(["Costo", Utils.escapeHtml(Utils.formatMonto(r.costo))]);
+    if (r.monto_sena) filas.push(["Seña", Utils.escapeHtml(Utils.formatMonto(r.monto_sena))]);
+    if (r.tipo_cama) filas.push(["Tipo de cama", Utils.escapeHtml(r.tipo_cama)]);
+    if (r.observaciones && r.observaciones.trim()) filas.push(["Observaciones", Utils.escapeHtml(r.observaciones)]);
+
+    const tieneDetalle = filas.length > 0;
+    const detalle = tieneDetalle
+      ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
     return `
-      <div class="card${tieneObs ? " card-clickable" : ""}"${tieneObs ? ' onclick="this.querySelector(\'.card-detail\').hidden = !this.querySelector(\'.card-detail\').hidden"' : ""}>
+      <div class="card${tieneDetalle ? " card-clickable" : ""}"${tieneDetalle ? ' onclick="this.querySelector(\'.card-detail\').hidden = !this.querySelector(\'.card-detail\').hidden"' : ""}>
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(r.huesped || "Sin nombre")}${tieneObs ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
+            <div class="card-title">${Utils.escapeHtml(r.huesped || "Sin nombre")}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
             <div class="card-sub">${sub}</div>
           </div>
           <div class="card-meta">

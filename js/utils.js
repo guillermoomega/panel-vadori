@@ -68,10 +68,14 @@ const Utils = (() => {
     return div.innerHTML;
   }
 
+  function formatMonto(n) {
+    return `$${Number(n).toLocaleString("es-AR")}`;
+  }
+
   return {
     todayISO, fechaLarga, fechaCorta,
     estadoReservaSuite, badgeClaseReserva,
     badgeClaseLimpieza, claseCardLimpieza,
-    escapeHtml
+    escapeHtml, formatMonto
   };
 })();
