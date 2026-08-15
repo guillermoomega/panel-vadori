@@ -51,17 +51,28 @@ const ViewHoy = (() => {
       </div>`;
   }
 
-  function cardMesa(m) {
+  function agruparPorTurno(mesas) {
+    const porHora = new Map();
+    for (const m of mesas) {
+      if (m.estado === "Cancelada") continue;
+      const hora = m.hora || "Sin hora";
+      if (!porHora.has(hora)) porHora.set(hora, { hora, personas: 0, ninios: 0 });
+      const t = porHora.get(hora);
+      t.personas += Number(m.personas) || 0;
+      t.ninios += Number(m.ninios) || 0;
+    }
+    return Array.from(porHora.values()).sort((a, b) => a.hora.localeCompare(b.hora));
+  }
+
+  function cardTurno(t) {
     return `
       <div class="card">
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(m.nombre || "Sin nombre")}</div>
-            <div class="card-sub">${m.personas ?? "?"} pers.${m.ninios ? ` (${m.ninios} niños)` : ""}${m.notas ? ` · ${Utils.escapeHtml(m.notas)}` : ""}</div>
+            <div class="card-title">${Utils.escapeHtml(t.hora)}</div>
           </div>
           <div class="card-meta">
-            <div class="card-hora">${Utils.escapeHtml(m.hora || "")}</div>
-            <span class="badge ${Utils.badgeClaseReserva(m.estado)}">${Utils.escapeHtml(m.estado || "—")}</span>
+            <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
           </div>
         </div>
       </div>`;
@@ -85,7 +96,7 @@ const ViewHoy = (() => {
       elContent().innerHTML =
         seccion("Check-ins de hoy", data.checkins, cardReserva, "Sin check-ins hoy.") +
         seccion("Check-outs de hoy", data.checkouts, cardReserva, "Sin check-outs hoy.") +
-        seccion("Mesas de hoy", data.mesas_hoy, cardMesa, "Sin reservas de mesa hoy.");
+        seccion("Mesas de hoy", agruparPorTurno(data.mesas_hoy), cardTurno, "Sin reservas de mesa hoy.");
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
