@@ -56,25 +56,31 @@ const ViewHoy = (() => {
     for (const m of mesas) {
       if (m.estado === "Cancelada") continue;
       const hora = m.hora || "Sin hora";
-      if (!porHora.has(hora)) porHora.set(hora, { hora, personas: 0, ninios: 0 });
+      if (!porHora.has(hora)) porHora.set(hora, { hora, personas: 0, ninios: 0, reservas: [] });
       const t = porHora.get(hora);
       t.personas += Number(m.personas) || 0;
       t.ninios += Number(m.ninios) || 0;
+      t.reservas.push(m);
     }
     return Array.from(porHora.values()).sort((a, b) => a.hora.localeCompare(b.hora));
   }
 
   function cardTurno(t) {
+    const detalle = `<div class="card-detail" hidden>${t.reservas.map(r =>
+      `<div>${Utils.escapeHtml(r.nombre || "Sin nombre")} — ${r.personas ?? "?"} ad.${r.ninios ? ` · ${r.ninios} niños` : ""}</div>`
+    ).join("")}</div>`;
+
     return `
-      <div class="card">
+      <div class="card card-clickable">
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(t.hora)}</div>
+            <div class="card-title">${Utils.escapeHtml(t.hora)} <span class="card-info-icon">ⓘ</span></div>
           </div>
           <div class="card-meta">
             <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
           </div>
         </div>
+        ${detalle}
       </div>`;
   }
 
