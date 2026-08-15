@@ -2,6 +2,18 @@ const ViewHoy = (() => {
   const elEstado = () => document.getElementById("hoy-estado");
   const elContent = () => document.getElementById("hoy-content");
 
+  let listenersAttached = false;
+  function attachListeners() {
+    if (listenersAttached) return;
+    listenersAttached = true;
+    elContent().addEventListener("click", (ev) => {
+      const card = ev.target.closest(".card-clickable");
+      if (!card) return;
+      const detalle = card.querySelector(".card-detail");
+      if (detalle) detalle.hidden = !detalle.hidden;
+    });
+  }
+
   function cardReserva(r) {
     const estado = Utils.estadoReservaSuite(r);
     const unidad = r.sin_asignar ? "sin asignar" : (r.unidad || "—");
@@ -25,7 +37,7 @@ const ViewHoy = (() => {
       : "";
 
     return `
-      <div class="card${tieneDetalle ? " card-clickable" : ""}"${tieneDetalle ? ' onclick="this.querySelector(\'.card-detail\').hidden = !this.querySelector(\'.card-detail\').hidden"' : ""}>
+      <div class="card${tieneDetalle ? " card-clickable" : ""}">
         <div class="card-row">
           <div class="card-main">
             <div class="card-title">${Utils.escapeHtml(r.huesped || "Sin nombre")}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
@@ -63,6 +75,7 @@ const ViewHoy = (() => {
   }
 
   async function render() {
+    attachListeners();
     elEstado().textContent = "Cargando…";
     elEstado().classList.remove("error");
     elContent().innerHTML = "";

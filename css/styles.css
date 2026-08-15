@@ -162,7 +162,7 @@ body {
   gap: 10px;
 }
 
-.card-clickable { cursor: pointer; }
+.card-clickable { cursor: pointer; touch-action: manipulation; }
 
 .card-info-icon {
   color: var(--text-muted);
