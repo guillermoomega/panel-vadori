@@ -35,6 +35,11 @@
     <div id="limpieza-estado" class="estado-msg"></div>
     <div id="limpieza-grid" class="unidades-grid"></div>
   </section>
+
+  <section id="view-horas" class="view" hidden>
+    <div id="horas-estado" class="estado-msg"></div>
+    <div id="horas-content"></div>
+  </section>
 </main>
 
 <nav class="tabbar">
@@ -50,6 +55,10 @@
     <span class="tab-icon">✓</span>
     <span>Limpieza</span>
   </button>
+  <button type="button" class="tab-btn" data-view="horas">
+    <span class="tab-icon">⏱</span>
+    <span>Horas</span>
+  </button>
 </nav>
 
 <script src="js/config.js"></script>
@@ -59,6 +68,7 @@
 <script src="js/views/hoy.js"></script>
 <script src="js/views/limpieza.js"></script>
 <script src="js/views/calendario.js"></script>
+<script src="js/views/horas.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

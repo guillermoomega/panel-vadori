@@ -388,6 +388,43 @@ body {
   text-transform: capitalize;
 }
 
+/* --- Horas --- */
+
+.horas-periodo {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 4px 4px 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.horas-periodo strong {
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.input-fecha {
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
 /* --- Calendario --- */
 
 #calendar {
