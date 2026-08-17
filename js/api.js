@@ -43,6 +43,7 @@ const Api = (() => {
     hoy: () => get("/hoy"),
     limpieza: () => get("/limpieza"),
     asignar: (reserva_id, unidad_id) => post("/asignar", { reserva_id, unidad_id }),
-    recibirMesa: (reserva_id) => post("/recibir", { reserva_id })
+    recibirMesa: (reserva_id) => post("/recibir", { reserva_id }),
+    walkin: (turno, adultos, ninios) => post("/walkin", { turno, adultos, ninios })
   };
 })();

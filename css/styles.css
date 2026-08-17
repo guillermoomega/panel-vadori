@@ -218,6 +218,62 @@ body {
 }
 .btn-asignar:disabled { opacity: 0.6; cursor: default; }
 
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn-sumar {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-sumar:disabled { opacity: 0.6; cursor: default; }
+
+.card-walkin-form[hidden] { display: none; }
+
+.card-walkin-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.input-adultos,
+.input-ninios {
+  width: 64px;
+  min-width: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.btn-walkin-confirmar {
+  flex: 1;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-walkin-confirmar:disabled { opacity: 0.6; cursor: default; }
+
 .card-main { min-width: 0; }
 
 .card-title {

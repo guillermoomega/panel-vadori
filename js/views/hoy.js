@@ -3,6 +3,7 @@ const ViewHoy = (() => {
   const elContent = () => document.getElementById("hoy-content");
 
   const turnosHoyAbiertos = new Set();
+  const turnosWalkinAbiertos = new Set();
 
   let listenersAttached = false;
   function attachListeners() {
@@ -19,7 +20,25 @@ const ViewHoy = (() => {
         await handleRecibir(btnRecibir);
         return;
       }
-      if (ev.target.closest(".card-asignar")) return;
+      const btnSumar = ev.target.closest(".btn-sumar");
+      if (btnSumar) {
+        const hora = btnSumar.dataset.hora;
+        const card = btnSumar.closest(".card");
+        const form = card.querySelector(".card-walkin-form");
+        form.hidden = !form.hidden;
+        if (form.hidden) turnosWalkinAbiertos.delete(hora);
+        else {
+          turnosWalkinAbiertos.add(hora);
+          form.querySelector(".input-adultos").focus();
+        }
+        return;
+      }
+      const btnWalkinConfirmar = ev.target.closest(".btn-walkin-confirmar");
+      if (btnWalkinConfirmar) {
+        await handleWalkin(btnWalkinConfirmar);
+        return;
+      }
+      if (ev.target.closest(".card-asignar") || ev.target.closest(".card-walkin-form")) return;
       const card = ev.target.closest(".card-clickable");
       if (!card) return;
       const detalle = card.querySelector(".card-detail");
@@ -44,6 +63,36 @@ const ViewHoy = (() => {
       await render();
     } catch (err) {
       btn.disabled = false;
+      btn.textContent = textoOriginal;
+      alert(err.message);
+    }
+  }
+
+  async function handleWalkin(btn) {
+    const hora = btn.dataset.hora;
+    const form = btn.closest(".card-walkin-form");
+    const inputAdultos = form.querySelector(".input-adultos");
+    const inputNinios = form.querySelector(".input-ninios");
+    const adultos = parseInt(inputAdultos.value) || 0;
+    const ninios = parseInt(inputNinios.value) || 0;
+    if (adultos + ninios <= 0) {
+      inputAdultos.focus();
+      return;
+    }
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    inputAdultos.disabled = true;
+    inputNinios.disabled = true;
+    btn.textContent = "Agregando…";
+    try {
+      const res = await Api.walkin(hora, adultos, ninios);
+      if (!res.ok) throw new Error(res.error || "No se pudo registrar el walk-in.");
+      turnosWalkinAbiertos.delete(hora);
+      await render();
+    } catch (err) {
+      btn.disabled = false;
+      inputAdultos.disabled = false;
+      inputNinios.disabled = false;
       btn.textContent = textoOriginal;
       alert(err.message);
     }
@@ -172,24 +221,44 @@ const ViewHoy = (() => {
   }
 
   function cardTurnoHoy(t) {
+    const hora = Utils.escapeHtml(t.hora);
     const pendientes = t.reservas.filter(r => r.estado !== "Recibida");
-    const filas = pendientes.length
-      ? pendientes.map(filaMesaHoy).join("")
-      : `<div class="empty-msg">Todas recibidas.</div>`;
-    const abierto = turnosHoyAbiertos.has(t.hora);
+    const filas = t.reservas.length
+      ? (pendientes.length ? pendientes.map(filaMesaHoy).join("") : `<div class="empty-msg">Todas recibidas.</div>`)
+      : `<div class="empty-msg">Sin reservas a esta hora.</div>`;
+    const detalleAbierto = turnosHoyAbiertos.has(t.hora);
+    const walkinAbierto = turnosWalkinAbiertos.has(t.hora);
 
     return `
-      <div class="card card-clickable" data-hora="${Utils.escapeHtml(t.hora)}">
+      <div class="card card-clickable" data-hora="${hora}">
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(t.hora)} <span class="card-info-icon">ⓘ</span></div>
+            <div class="card-title">${hora} <span class="card-info-icon">ⓘ</span></div>
           </div>
-          <div class="card-meta">
-            <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
+          <div class="card-right">
+            <div class="card-meta">
+              <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
+            </div>
+            <button type="button" class="btn-sumar" data-hora="${hora}">Sumar</button>
           </div>
         </div>
-        <div class="card-detail"${abierto ? "" : " hidden"}>${filas}</div>
+        <div class="card-detail"${detalleAbierto ? "" : " hidden"}>${filas}</div>
+        <div class="card-walkin-form"${walkinAbierto ? "" : " hidden"}>
+          <input type="number" class="input-adultos" inputmode="numeric" min="0" value="1" placeholder="Adultos">
+          <input type="number" class="input-ninios" inputmode="numeric" min="0" value="0" placeholder="Niños">
+          <button type="button" class="btn-walkin-confirmar" data-hora="${hora}">Agregar</button>
+        </div>
       </div>`;
+  }
+
+  function mergeTurnosFijos(turnosHoy, turnosFijos) {
+    const porHora = new Map(turnosHoy.map(t => [t.hora, t]));
+    for (const f of (turnosFijos || [])) {
+      if (!porHora.has(f.hora)) {
+        porHora.set(f.hora, { hora: f.hora, personas: 0, ninios: 0, reservas: [] });
+      }
+    }
+    return Array.from(porHora.values()).sort((a, b) => a.hora.localeCompare(b.hora));
   }
 
   function totalPersonasTurnos(turnos) {
@@ -224,7 +293,7 @@ const ViewHoy = (() => {
       const unidades = limpieza.unidades || [];
       const mesasManana = (rango.mesas || []).filter(m => m.fecha === manana);
       const mesasPasado = (rango.mesas || []).filter(m => m.fecha === pasado);
-      const turnosHoy = agruparPorTurno(data.mesas_hoy);
+      const turnosHoy = mergeTurnosFijos(agruparPorTurno(data.mesas_hoy), data.turnos_fijos);
       const turnosManana = agruparPorTurno(mesasManana);
       const turnosPasado = agruparPorTurno(mesasPasado);
 
@@ -232,9 +301,9 @@ const ViewHoy = (() => {
       elContent().innerHTML =
         seccion("Check-ins de hoy", data.checkins, r => cardReserva(r, unidades), "Sin check-ins hoy.") +
         seccion("Check-outs de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin check-outs hoy.") +
-        seccion(tituloMesas("Mesas de hoy", turnosHoy), turnosHoy, cardTurnoHoy, "Sin reservas de mesa hoy.") +
-        seccion(tituloMesas("Mesas de mañana", turnosManana), turnosManana, cardTurno, "Sin reservas de mesa mañana.") +
-        seccion(tituloMesas("Mesas de pasado mañana", turnosPasado), turnosPasado, cardTurno, "Sin reservas de mesa pasado mañana.");
+        seccion(tituloMesas("Reservas de hoy", turnosHoy), turnosHoy, cardTurnoHoy, "Sin reservas de mesa hoy.") +
+        seccion(tituloMesas("Reservas de mañana", turnosManana), turnosManana, cardTurno, "Sin reservas de mesa mañana.") +
+        seccion(tituloMesas("Reservas de pasado mañana", turnosPasado), turnosPasado, cardTurno, "Sin reservas de mesa pasado mañana.");
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
