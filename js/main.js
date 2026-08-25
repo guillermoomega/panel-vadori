@@ -3,7 +3,8 @@
     hoy: { section: document.getElementById("view-hoy"), render: ViewHoy.render, loaded: false },
     calendario: { section: document.getElementById("view-calendario"), render: ViewCalendario.render, loaded: false },
     limpieza: { section: document.getElementById("view-limpieza"), render: ViewLimpieza.render, loaded: false },
-    horas: { section: document.getElementById("view-horas"), render: ViewHoras.render, loaded: false }
+    horas: { section: document.getElementById("view-horas"), render: ViewHoras.render, loaded: false },
+    checkins: { section: document.getElementById("view-checkins"), render: ViewCheckins.render, loaded: false }
   };
 
   function showView(name) {

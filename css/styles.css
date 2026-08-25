@@ -425,6 +425,31 @@ body {
   font-size: 0.85rem;
 }
 
+/* --- Check-ins --- */
+
+.rango-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 4px 4px 14px;
+}
+
+.rango-tab {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.rango-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
 /* --- Calendario --- */
 
 #calendar {
