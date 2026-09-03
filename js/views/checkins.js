@@ -16,7 +16,7 @@ const ViewCheckins = (() => {
   function attachListeners() {
     if (listenersAttached) return;
     listenersAttached = true;
-    elContent().addEventListener("click", (ev) => {
+    elContent().addEventListener("click", async (ev) => {
       const btnRango = ev.target.closest(".rango-tab");
       if (btnRango) {
         const modo = btnRango.dataset.modo;
@@ -43,7 +43,12 @@ const ViewCheckins = (() => {
         render();
         return;
       }
-      if (ev.target.closest(".card-walkin-form")) return;
+      const btnAsignar = ev.target.closest(".btn-asignar");
+      if (btnAsignar) {
+        await handleAsignar(btnAsignar);
+        return;
+      }
+      if (ev.target.closest(".card-walkin-form") || ev.target.closest(".card-asignar")) return;
       const card = ev.target.closest(".card-clickable");
       if (!card) return;
       const detalle = card.querySelector(".card-detail");
@@ -52,7 +57,32 @@ const ViewCheckins = (() => {
     });
   }
 
-  function cardCheckin(r) {
+  async function handleAsignar(btn) {
+    const reservaId = btn.dataset.reservaId;
+    const wrapper = btn.closest(".card-asignar");
+    const select = wrapper.querySelector(".select-unidad");
+    const unidadId = select.value;
+    if (!unidadId) {
+      select.focus();
+      return;
+    }
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    select.disabled = true;
+    btn.textContent = "Asignando…";
+    try {
+      const res = await Api.asignar(reservaId, unidadId);
+      if (!res.ok) throw new Error(res.error || "No se pudo asignar la unidad.");
+      await render();
+    } catch (err) {
+      btn.disabled = false;
+      select.disabled = false;
+      btn.textContent = textoOriginal;
+      alert(err.message);
+    }
+  }
+
+  function cardCheckin(r, unidades = []) {
     const estado = Utils.estadoReservaSuite(r);
     const unidad = r.sin_asignar ? "sin asignar" : (r.unidad || "—");
     const subPartes = [unidad];
@@ -74,6 +104,16 @@ const ViewCheckins = (() => {
       ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
+    const asignar = r.sin_asignar
+      ? `<div class="card-asignar">
+          <select class="select-unidad">
+            <option value="">Elegir unidad…</option>
+            ${unidades.map(u => `<option value="${Utils.escapeHtml(u.id)}">${Utils.escapeHtml(u.nombre)}${u.estado && u.estado !== "Lista" ? " · " + Utils.escapeHtml(u.estado) : ""}</option>`).join("")}
+          </select>
+          <button type="button" class="btn-asignar" data-reserva-id="${Utils.escapeHtml(r.id)}">Asignar</button>
+        </div>`
+      : "";
+
     return `
       <div class="card${tieneDetalle ? " card-clickable" : ""}">
         <div class="card-row">
@@ -86,6 +126,7 @@ const ViewCheckins = (() => {
           </div>
         </div>
         ${detalle}
+        ${asignar}
       </div>`;
   }
 
@@ -117,7 +158,8 @@ const ViewCheckins = (() => {
     elEstado().classList.remove("error");
     try {
       const { desde, hasta } = calcularRango(rangoModo, diasPersonalizado);
-      const data = await Api.ocupacion(desde, hasta);
+      const [data, limpieza] = await Promise.all([Api.ocupacion(desde, hasta), Api.limpieza()]);
+      const unidades = limpieza.unidades || [];
       const checkins = (data.suites || [])
         .filter(r => r.checkin >= desde && r.checkin <= hasta)
         .sort((a, b) => a.checkin.localeCompare(b.checkin) || (a.huesped || "").localeCompare(b.huesped || ""));
@@ -125,7 +167,7 @@ const ViewCheckins = (() => {
       const grupos = agruparPorDia(checkins);
       const contenido = grupos.length
         ? grupos.map(([fecha, items]) =>
-            `<div class="section-title">${Utils.escapeHtml(Utils.fechaLarga(fecha))}</div>${items.map(cardCheckin).join("")}`
+            `<div class="section-title">${Utils.escapeHtml(Utils.fechaLarga(fecha))}</div>${items.map(r => cardCheckin(r, unidades)).join("")}`
           ).join("")
         : `<div class="empty-msg">Sin check-ins en este período.</div>`;
 
