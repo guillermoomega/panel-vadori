@@ -2,19 +2,24 @@ const ViewLimpieza = (() => {
   const elEstado = () => document.getElementById("limpieza-estado");
   const elGrid = () => document.getElementById("limpieza-grid");
 
+  function textoEstado(u) {
+    if (u.estado === "ocupada" && u.huesped) return u.huesped;
+    return u.estado || "\u2014";
+  }
+
   function cardUnidad(u) {
     return `
       <div class="unidad-card ${Utils.claseCardLimpieza(u.estado)}">
         <div>
-          <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "—")}</div>
+          <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "\u2014")}</div>
           <div class="unidad-tipo">${Utils.escapeHtml(u.tipo || "")}</div>
         </div>
-        <span class="badge ${Utils.badgeClaseLimpieza(u.estado)}">${Utils.escapeHtml(u.estado || "—")}</span>
+        <span class="badge ${Utils.badgeClaseLimpieza(u.estado)}">${Utils.escapeHtml(textoEstado(u))}</span>
       </div>`;
   }
 
   async function render() {
-    elEstado().textContent = "Cargando…";
+    elEstado().textContent = "Cargando\u2026";
     elEstado().classList.remove("error");
     elGrid().innerHTML = "";
     try {
