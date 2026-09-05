@@ -23,7 +23,7 @@ const ViewCalendario = (() => {
   function eventosDeSuites(suites) {
     return suites.map(r => {
       const estado = Utils.estadoReservaSuite(r);
-      const unidad = r.sin_asignar ? "sin asignar" : (r.unidad || "?");
+      const unidad = r.sin_asignar ? (r.tipo_unidad || "sin asignar") : (r.unidad || "?");
       return {
         id: "suite-" + r.id,
         title: `${r.huesped || "Sin nombre"} · ${unidad}`,
