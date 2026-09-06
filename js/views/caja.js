@@ -86,6 +86,18 @@ const ViewCaja = (() => {
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)}</div></div>`;
   }
 
+  function comprobantesDetalleHtml(r) {
+    if (!r.comprobantes || !r.comprobantes.length) return "";
+    const filas = r.comprobantes.map(c => `
+      <div class="card-row">
+        <div class="card-sub">${c.fecha ? Utils.fechaLarga(c.fecha) : "—"} · ${Utils.escapeHtml(c.categoria || "Sin categoría")}${c.negocio ? " · " + Utils.escapeHtml(c.negocio) : ""}</div>
+        <div>${val(c.monto)}</div>
+      </div>`).join("");
+    return `
+      <div class="card-detail-label">Comprobantes cargados en el turno</div>
+      ${filas}`;
+  }
+
   function cardReporte(r) {
     const tituloFecha = r.fecha_cierre
       ? Utils.fechaLarga(r.fecha_cierre)
@@ -122,6 +134,8 @@ const ViewCaja = (() => {
             ${badgeDiferenciaTotal(r)}
             ${badgeEgresosComprobantes(r)}
           </div>
+
+          ${comprobantesDetalleHtml(r)}
         </div>
       </div>`;
   }
