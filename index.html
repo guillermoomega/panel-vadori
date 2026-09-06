@@ -45,6 +45,11 @@
     <div id="checkins-estado" class="estado-msg"></div>
     <div id="checkins-content"></div>
   </section>
+
+  <section id="view-caja" class="view" hidden>
+    <div id="caja-estado" class="estado-msg"></div>
+    <div id="caja-content"></div>
+  </section>
 </main>
 
 <nav class="tabbar">
@@ -68,6 +73,10 @@
     <span class="tab-icon">▤</span>
     <span>Check-ins</span>
   </button>
+  <button type="button" class="tab-btn" data-view="caja">
+    <span class="tab-icon">$</span>
+    <span>Caja</span>
+  </button>
 </nav>
 
 <script src="js/config.js"></script>
@@ -79,6 +88,7 @@
 <script src="js/views/calendario.js"></script>
 <script src="js/views/horas.js"></script>
 <script src="js/views/checkins.js"></script>
+<script src="js/views/caja.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
