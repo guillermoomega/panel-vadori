@@ -99,9 +99,9 @@ const ViewCaja = (() => {
   }
 
   function cardReporte(r) {
-    const tituloFecha = r.fecha_cierre
-      ? Utils.fechaLarga(r.fecha_cierre)
-      : (r.fecha_apertura ? Utils.fechaLarga(r.fecha_apertura) : "Fecha sin datos");
+    const tituloFecha = r.fecha_apertura
+      ? Utils.fechaLarga(r.fecha_apertura)
+      : (r.fecha_cierre ? Utils.fechaLarga(r.fecha_cierre) : "Fecha sin datos");
 
     return `
       <div class="card">
