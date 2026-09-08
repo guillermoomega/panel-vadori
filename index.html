@@ -50,6 +50,11 @@
     <div id="caja-estado" class="estado-msg"></div>
     <div id="caja-content"></div>
   </section>
+
+  <section id="view-resumen" class="view" hidden>
+    <div id="resumen-estado" class="estado-msg"></div>
+    <div id="resumen-content"></div>
+  </section>
 </main>
 
 <nav class="tabbar">
@@ -77,6 +82,10 @@
     <span class="tab-icon">$</span>
     <span>Caja</span>
   </button>
+  <button type="button" class="tab-btn" data-view="resumen">
+    <span class="tab-icon">Σ</span>
+    <span>Resumen</span>
+  </button>
 </nav>
 
 <script src="js/config.js"></script>
@@ -89,6 +98,7 @@
 <script src="js/views/horas.js"></script>
 <script src="js/views/checkins.js"></script>
 <script src="js/views/caja.js"></script>
+<script src="js/views/resumen_semanal.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
