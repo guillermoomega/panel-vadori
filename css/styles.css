@@ -505,6 +505,5 @@ body {
 
 .fc-event.estado-confirmada { background: var(--ok); }
 .fc-event.estado-pendiente { background: var(--warn); }
-.fc-event.estado-senada { background: var(--warn); }
 .fc-event.estado-cancelada { background: var(--neutral); text-decoration: line-through; }
 .fc-event.tipo-mesa { opacity: 0.85; }

@@ -13,7 +13,6 @@ const ViewCalendario = (() => {
     const map = {
       "Confirmada": "estado-confirmada",
       "Recibida": "estado-confirmada",
-      "Señada": "estado-senada",
       "Pendiente": "estado-pendiente",
       "Cancelada": "estado-cancelada"
     };

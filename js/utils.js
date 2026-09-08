@@ -31,16 +31,15 @@ const Utils = (() => {
     return `${y2}-${m2}-${d2}`;
   }
 
-  // Estado de reserva de suite: deriva "Señada" sin que el backend invente el valor.
+  // Estado real de la reserva de suite: Pendiente (espera pago de seña), Confirmada (seña pagada
+  // o salteada con vvs272) o Cancelada. Se muestra tal cual viene de Airtable, sin estados derivados.
   function estadoReservaSuite(reserva) {
-    if (reserva.estado === "Pendiente" && Number(reserva.monto_sena) > 0) return "Señada";
     return reserva.estado;
   }
 
   const BADGE_RESERVA = {
     "Confirmada": "badge-ok",
     "Recibida": "badge-ok",
-    "Señada": "badge-warn",
     "Pendiente": "badge-warn",
     "Cancelada": "badge-neutral"
   };
