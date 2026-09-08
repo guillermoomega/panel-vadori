@@ -23,7 +23,7 @@ const ViewCalendario = (() => {
     return suites.map(r => {
       const estado = Utils.estadoReservaSuite(r);
       const unidad = r.sin_asignar
-        ? `${Utils.tipoUnidadLabel(r.tipo_unidad) || "sin asignar"} (sin asignar)`
+        ? (Utils.tipoUnidadLabel(r.tipo_unidad) || "Sin asignar")
         : (r.unidad || "?");
       return {
         id: "suite-" + r.id,
