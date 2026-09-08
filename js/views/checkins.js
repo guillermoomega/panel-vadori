@@ -86,13 +86,13 @@ const ViewCheckins = (() => {
     const estado = Utils.estadoReservaSuite(r);
     const unidad = r.sin_asignar ? "sin asignar" : (r.unidad || "—");
     const subPartes = [unidad];
-    if (r.tipo_unidad) subPartes.push(r.tipo_unidad);
+    if (r.tipo_unidad) subPartes.push(Utils.tipoUnidadLabel(r.tipo_unidad));
     if (r.adultos) subPartes.push(`${r.adultos} ad.`);
     if (r.paquete) subPartes.push(r.paquete);
     const sub = subPartes.map(Utils.escapeHtml).join(" · ");
 
     const filas = [];
-    if (r.tipo_unidad) filas.push(["Tipo de unidad", Utils.escapeHtml(r.tipo_unidad)]);
+    if (r.tipo_unidad) filas.push(["Tipo de unidad", Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad))]);
     if (r.paquete) filas.push(["Paquete", Utils.escapeHtml(r.paquete)]);
     if (r.costo !== null && r.costo !== undefined) filas.push(["Costo", Utils.escapeHtml(Utils.formatMonto(r.costo))]);
     if (r.monto_sena) filas.push(["Seña", Utils.escapeHtml(Utils.formatMonto(r.monto_sena))]);

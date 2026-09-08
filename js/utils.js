@@ -81,10 +81,19 @@ const Utils = (() => {
     return `$${Number(n).toLocaleString("es-AR")}`;
   }
 
+  // Normaliza Tipo_unidad de Airtable ("cuarto ", "Suites", etc.) a una etiqueta prolija.
+  function tipoUnidadLabel(tipo) {
+    if (!tipo) return null;
+    const t = tipo.trim().toLowerCase();
+    if (t === "cuarto") return "Cuarto";
+    if (t === "suite" || t === "suites") return "Suites";
+    return tipo.trim();
+  }
+
   return {
     todayISO, addDays, fechaLarga, fechaCorta,
     estadoReservaSuite, badgeClaseReserva,
     badgeClaseLimpieza, claseCardLimpieza,
-    escapeHtml, formatMonto
+    escapeHtml, formatMonto, tipoUnidadLabel
   };
 })();
