@@ -69,9 +69,9 @@ const ViewResumenSemanal = (() => {
 
   function filaComprobante(c) {
     const fechaTxt = c.fecha ? Utils.fechaCorta(c.fecha) : "sin fecha";
-    const negocio = c.negocio ? Utils.escapeHtml(c.negocio) : "";
+    const proveedor = c.proveedor ? Utils.escapeHtml(c.proveedor) : "Sin proveedor";
     const registrado = c.registrado_por ? Utils.escapeHtml(c.registrado_por) : "";
-    const label = negocio ? `${fechaTxt} · ${negocio}` : fechaTxt;
+    const label = `${fechaTxt} · ${proveedor}`;
     const valor = registrado ? `${Utils.formatMonto(c.monto)} — ${registrado}` : Utils.formatMonto(c.monto);
     return `<div class="card-detail-label">${label}</div><div>${valor}</div>`;
   }
