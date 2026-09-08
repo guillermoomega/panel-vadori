@@ -48,7 +48,12 @@ const ViewCheckins = (() => {
         await handleAsignar(btnAsignar);
         return;
       }
-      if (ev.target.closest(".card-walkin-form") || ev.target.closest(".card-asignar")) return;
+      const btnPagar = ev.target.closest(".btn-pagar");
+      if (btnPagar) {
+        await handlePagar(btnPagar);
+        return;
+      }
+      if (ev.target.closest(".card-walkin-form") || ev.target.closest(".card-asignar") || ev.target.closest(".card-pagar")) return;
       const card = ev.target.closest(".card-clickable");
       if (!card) return;
       const detalle = card.querySelector(".card-detail");
@@ -77,6 +82,22 @@ const ViewCheckins = (() => {
     } catch (err) {
       btn.disabled = false;
       select.disabled = false;
+      btn.textContent = textoOriginal;
+      alert(err.message);
+    }
+  }
+
+  async function handlePagar(btn) {
+    const reservaId = btn.dataset.reservaId;
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Marcando…";
+    try {
+      const res = await Api.pagar(reservaId);
+      if (!res.ok) throw new Error(res.error || "No se pudo marcar el pago.");
+      await render();
+    } catch (err) {
+      btn.disabled = false;
       btn.textContent = textoOriginal;
       alert(err.message);
     }
@@ -123,10 +144,12 @@ const ViewCheckins = (() => {
           </div>
           <div class="card-meta">
             <span class="badge ${Utils.badgeClaseReserva(estado)}">${Utils.escapeHtml(estado || "—")}</span>
+            ${estado !== "Cancelada" ? `<div class="badge-pagado"><span class="badge ${r.pagado ? "badge-ok" : "badge-neutral"}">${r.pagado ? "Pagado" : "Sin pagar"}</span></div>` : ""}
           </div>
         </div>
         ${detalle}
         ${asignar}
+        ${(!r.pagado && estado !== "Cancelada") ? `<div class="card-pagar"><button type="button" class="btn-pagar" data-reserva-id="${Utils.escapeHtml(r.id)}">Marcar como pagado</button></div>` : ""}
       </div>`;
   }
 
