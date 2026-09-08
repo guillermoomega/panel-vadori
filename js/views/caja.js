@@ -112,6 +112,10 @@ const ViewCaja = (() => {
           </div>
           <div class="card-meta"><span class="card-hora">${val(r.resumen)}</span></div>
         </div>
+        <div class="card-row" style="flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+          ${badgeDiferenciaTotal(r)}
+          ${badgeEgresosComprobantes(r)}
+        </div>
         <div class="card-detail">
           <div class="card-detail-label">Apertura / Cierre</div>
           ${filaAperturaCierre("Apertura", r.fecha_apertura, r.hora_apertura, r.responsable_apertura)}
@@ -128,12 +132,6 @@ const ViewCaja = (() => {
           <div class="card-row"><div class="card-sub">Total</div><div>Dif ${val(r.diferencia_total)}</div></div>
 
           ${terminalHtml(r)}
-
-          <div class="card-detail-label">Consistencia</div>
-          <div class="card-row" style="flex-wrap: wrap; gap: 6px;">
-            ${badgeDiferenciaTotal(r)}
-            ${badgeEgresosComprobantes(r)}
-          </div>
 
           ${comprobantesDetalleHtml(r)}
         </div>
@@ -159,6 +157,7 @@ const ViewCaja = (() => {
       </div>
 
       <div class="section-title">Reportes de caja</div>
+      <div class="estado-msg" style="padding-top: 0;">Corresponden únicamente a la caja principal (Caja GV) — no incluyen otras cajas del predio.</div>
       ${reportesHtml}
     `;
   }
