@@ -46,6 +46,7 @@ const Api = (() => {
     recibirMesa: (reserva_id) => post("/recibir", { reserva_id }),
     walkin: (turno, adultos, ninios) => post("/walkin", { turno, adultos, ninios }),
     horas: (rango) => get("/horas", rango || {}),
+    pagarHoras: (rango) => post("/horas/pagar", rango || {}),
     caja: (rango) => get("/caja", rango || {})
   };
 })();

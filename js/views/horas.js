@@ -4,6 +4,8 @@ const ViewHoras = (() => {
 
   let rangoOverride = null; // { desde, hasta } en YYYY-MM-DD, o null = rango por defecto del backend
   let listenersAttached = false;
+  let ultimoData = null;
+  let pagando = false;
 
   function formatFechaHora(iso) {
     const d = new Date(iso);
@@ -35,8 +37,41 @@ const ViewHoras = (() => {
       if (btnReset) {
         rangoOverride = null;
         render();
+        return;
+      }
+      const btnPagar = ev.target.closest("#horas-btn-pagar");
+      if (btnPagar) {
+        pagar();
       }
     });
+  }
+
+  async function pagar() {
+    if (pagando || !ultimoData) return;
+    const monto = Utils.formatMonto(ultimoData.total_monto);
+    const desdeTxt = formatFechaHora(ultimoData.desde);
+    const hastaTxt = formatFechaHora(ultimoData.hasta);
+    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?\n\nSe va a generar un comprobante de gasto (sueldos, Caja GV) que después se cruza con lo egresado en el turno.`);
+    if (!ok) return;
+
+    pagando = true;
+    const btn = document.getElementById("horas-btn-pagar");
+    if (btn) { btn.disabled = true; btn.textContent = "Pagando…"; }
+    elEstado().textContent = "";
+    elEstado().classList.remove("error");
+
+    try {
+      const res = await Api.pagarHoras(rangoOverride);
+      if (!res.ok) throw new Error(res.error || "No se pudo registrar el pago.");
+      elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`;
+      if (btn) { btn.textContent = "✓ Pagado"; }
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+      if (btn) { btn.disabled = false; btn.textContent = "Pagar"; }
+    } finally {
+      pagando = false;
+    }
   }
 
   function cardPersona(p) {
@@ -65,6 +100,7 @@ const ViewHoras = (() => {
   }
 
   function renderContent(data) {
+    ultimoData = data;
     const desdeStr = data.desde.slice(0, 10);
     const hastaStr = data.hasta.slice(0, 10);
 
@@ -73,6 +109,7 @@ const ViewHoras = (() => {
       : `<div class="empty-msg">Sin fichajes registrados en este período.</div>`;
 
     const totalTxt = data.personas.length ? Utils.formatMonto(data.total_monto) : "—";
+    const puedePagar = data.personas.length > 0 && data.total_monto > 0;
 
     const sinResolverHtml = data.sin_resolver.length
       ? `
@@ -101,7 +138,10 @@ const ViewHoras = (() => {
         <div class="card-main">
           <div class="card-title">Total</div>
         </div>
-        <div class="card-meta"><span class="card-hora">${totalTxt}</span></div>
+        <div class="card-right">
+          <span class="card-hora">${totalTxt}</span>
+          ${puedePagar ? `<button type="button" id="horas-btn-pagar" class="btn-sumar">Pagar</button>` : ""}
+        </div>
       </div>
 
       ${sinResolverHtml}
