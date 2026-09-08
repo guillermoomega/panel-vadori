@@ -4,6 +4,7 @@ const ViewResumenSemanal = (() => {
 
   let rangoOverride = null; // { desde, hasta } en YYYY-MM-DD, o null = rango por defecto del backend (miércoles a martes)
   let listenersAttached = false;
+  const categoriasAbiertas = new Set();
 
   function attachListeners() {
     if (listenersAttached) return;
@@ -28,6 +29,17 @@ const ViewResumenSemanal = (() => {
       if (btnReset) {
         rangoOverride = null;
         render();
+        return;
+      }
+      const card = ev.target.closest(".card-clickable");
+      if (!card) return;
+      const detalle = card.querySelector(".card-detail");
+      if (!detalle) return;
+      detalle.hidden = !detalle.hidden;
+      const categoria = card.dataset.categoria;
+      if (categoria) {
+        if (detalle.hidden) categoriasAbiertas.delete(categoria);
+        else categoriasAbiertas.add(categoria);
       }
     });
   }
@@ -55,13 +67,35 @@ const ViewResumenSemanal = (() => {
       </div>`;
   }
 
+  function filaComprobante(c) {
+    const fechaTxt = c.fecha ? Utils.fechaCorta(c.fecha) : "sin fecha";
+    const negocio = c.negocio ? Utils.escapeHtml(c.negocio) : "";
+    const registrado = c.registrado_por ? Utils.escapeHtml(c.registrado_por) : "";
+    const label = negocio ? `${fechaTxt} · ${negocio}` : fechaTxt;
+    const valor = registrado ? `${Utils.formatMonto(c.monto)} — ${registrado}` : Utils.formatMonto(c.monto);
+    return `<div class="card-detail-label">${label}</div><div>${valor}</div>`;
+  }
+
+  function filaCategoria(c) {
+    const detalle = (c.detalle || []).map(filaComprobante).join("");
+    const abierto = categoriasAbiertas.has(c.categoria);
+    return `
+      <div class="card card-clickable" data-categoria="${Utils.escapeHtml(c.categoria)}">
+        <div class="card-row">
+          <div class="card-main"><div class="card-title">${labelCategoria(c.categoria)} <span class="card-info-icon">ⓘ</span></div></div>
+          <div class="card-right"><span class="card-hora">${Utils.formatMonto(c.monto)}</span></div>
+        </div>
+        <div class="card-detail"${abierto ? "" : " hidden"}>${detalle}</div>
+      </div>`;
+  }
+
   function renderContent(data) {
     const t = data.totales || { ingresos_total: 0, ingresos_efectivo: 0, ingresos_tarjeta: 0, egresos_por_categoria: [], egresos_total: 0, ganancia_perdida: 0, turnos_incluidos: 0 };
     const gananciaClase = t.ganancia_perdida >= 0 ? "tile-ok" : "tile-bad";
     const gananciaLabel = t.ganancia_perdida >= 0 ? "Ganancia" : "Pérdida";
 
     const egresosFilas = (t.egresos_por_categoria || []).length
-      ? t.egresos_por_categoria.map(c => fila(labelCategoria(c.categoria), c.monto)).join("")
+      ? t.egresos_por_categoria.map(filaCategoria).join("")
       : `<div class="empty-msg">Sin comprobantes pagados en este período.</div>`;
 
     elContent().innerHTML = `
