@@ -37,29 +37,26 @@ const ViewCalendario = (() => {
     });
   }
 
-  function eventosDeMesas(mesas) {
-    return mesas.map(m => ({
-      id: "mesa-" + m.id,
-      title: `Mesa: ${m.nombre || "Sin nombre"} (${m.personas ?? "?"}p) ${m.hora || ""}`,
-      start: m.fecha,
-      allDay: true,
-      classNames: [claseEstadoReserva(m.estado), "tipo-mesa"]
-    }));
-  }
-
   async function cargarRango(info, successCallback, failureCallback) {
-    const desde = toISO(info.start);
+    const hoy = Utils.todayISO();
+    const desdeSolicitado = toISO(info.start);
+    const desde = desdeSolicitado < hoy ? hoy : desdeSolicitado;
     // FullCalendar's range end is exclusive; pedimos un día antes para no pasarnos.
     const hastaDate = new Date(info.end);
     hastaDate.setDate(hastaDate.getDate() - 1);
     const hasta = toISO(hastaDate);
+
+    if (desde > hasta) {
+      successCallback([]);
+      return;
+    }
 
     elEstado().textContent = "Cargando…";
     elEstado().classList.remove("error");
     try {
       const data = await Api.ocupacion(desde, hasta);
       elEstado().textContent = "";
-      successCallback([...eventosDeSuites(data.suites), ...eventosDeMesas(data.mesas)]);
+      successCallback(eventosDeSuites(data.suites));
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
@@ -76,6 +73,7 @@ const ViewCalendario = (() => {
       headerToolbar: { left: "prev,next today", center: "title", right: "" },
       locale: "es",
       firstDay: 1,
+      validRange: { start: Utils.todayISO() },
       events: cargarRango,
       eventDisplay: "block"
     });
