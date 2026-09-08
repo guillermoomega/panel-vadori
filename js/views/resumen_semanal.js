@@ -32,10 +32,37 @@ const ViewResumenSemanal = (() => {
     });
   }
 
+  const LABEL_CATEGORIA = {
+    "sueldos": "Sueldos",
+    "servicios": "Servicios",
+    "mantenimiento": "Mantenimiento",
+    "insumos cocina": "Insumos cocina",
+    "insumos suites": "Insumos suites",
+    "bebidas": "Bebidas",
+    "limpieza": "Limpieza",
+    "otros": "Otros"
+  };
+
+  function labelCategoria(categoria) {
+    return LABEL_CATEGORIA[categoria] || Utils.escapeHtml(categoria);
+  }
+
+  function fila(label, monto, totalRow) {
+    return `
+      <div class="card card-row"${totalRow ? ' style="font-weight:600;"' : ""}>
+        <div class="card-main"><div class="card-title">${label}</div></div>
+        <div class="card-right"><span class="card-hora">${Utils.formatMonto(monto)}</span></div>
+      </div>`;
+  }
+
   function renderContent(data) {
-    const t = data.totales || { ingresos_total: 0, egresos_efectivo: 0, egresos_tarjeta: 0, ganancia_perdida: 0, turnos_incluidos: 0 };
+    const t = data.totales || { ingresos_total: 0, ingresos_efectivo: 0, ingresos_tarjeta: 0, egresos_por_categoria: [], egresos_total: 0, ganancia_perdida: 0, turnos_incluidos: 0 };
     const gananciaClase = t.ganancia_perdida >= 0 ? "tile-ok" : "tile-bad";
     const gananciaLabel = t.ganancia_perdida >= 0 ? "Ganancia" : "Pérdida";
+
+    const egresosFilas = (t.egresos_por_categoria || []).length
+      ? t.egresos_por_categoria.map(c => fila(labelCategoria(c.categoria), c.monto)).join("")
+      : `<div class="empty-msg">Sin comprobantes pagados en este período.</div>`;
 
     elContent().innerHTML = `
       <div class="horas-periodo">
@@ -50,27 +77,23 @@ const ViewResumenSemanal = (() => {
         ${rangoOverride ? `<button type="button" id="resumen-btn-reset" class="btn-link">Por defecto</button>` : ""}
       </div>
 
-      <div class="section-title">Totales del período</div>
-      <div class="tiles-grid">
-        <div class="tile">
-          <div class="tile-label">Ingresos totales</div>
-          <div class="tile-value">${Utils.formatMonto(t.ingresos_total)}</div>
-        </div>
-        <div class="tile">
-          <div class="tile-label">Egresos en efectivo</div>
-          <div class="tile-value">${Utils.formatMonto(t.egresos_efectivo)}</div>
-        </div>
-        <div class="tile">
-          <div class="tile-label">Egresos en tarjeta</div>
-          <div class="tile-value">${Utils.formatMonto(t.egresos_tarjeta)}</div>
-        </div>
+      <div class="section-title">Ingresos</div>
+      ${fila("En efectivo", t.ingresos_efectivo)}
+      ${fila("En tarjetas", t.ingresos_tarjeta)}
+      ${fila("Total", t.ingresos_total, true)}
+
+      <div class="section-title">Egresos</div>
+      ${egresosFilas}
+      ${fila("Total", t.egresos_total, true)}
+
+      <div class="tiles-grid" style="margin-top: 12px;">
         <div class="tile ${gananciaClase}">
           <div class="tile-label">${gananciaLabel}</div>
           <div class="tile-value">${Utils.formatMonto(Math.abs(t.ganancia_perdida))}</div>
         </div>
       </div>
       <div class="estado-msg" style="padding-top: 0;">
-        Calculado sobre ${t.turnos_incluidos} turno${t.turnos_incluidos === 1 ? "" : "s"} de caja registrados en el período (Caja GV) — no incluye turnos sin reporte cargado.
+        Calculado sobre ${t.turnos_incluidos} turno${t.turnos_incluidos === 1 ? "" : "s"} de caja registrados en el período (ingresos) y sobre los comprobantes pagados en el período (egresos) — no incluye turnos sin reporte cargado.
       </div>
     `;
   }
