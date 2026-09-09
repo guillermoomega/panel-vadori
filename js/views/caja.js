@@ -76,6 +76,26 @@ const ViewCaja = (() => {
       </div>`;
   }
 
+  function badgeDepositosEfectivo(r) {
+    if (!r.depositos_efectivo) return "";
+    if (r.diferencia_efectivo_ajustada === null || r.diferencia_efectivo_ajustada === undefined) {
+      return `<span class="badge badge-neutral">Depósitos registrados, sin diferencia de efectivo para ajustar</span>`;
+    }
+    if (Math.abs(r.diferencia_efectivo_ajustada) < 1) {
+      return `<span class="badge badge-ok">Efectivo cuadra considerando depósitos</span>`;
+    }
+    return `<span class="badge badge-warn">Efectivo con depósitos: diferencia ${Utils.formatMonto(r.diferencia_efectivo_ajustada)}</span>`;
+  }
+
+  function filaDepositoEfectivo(r) {
+    if (!r.depositos_efectivo) return "";
+    return `
+      <div class="card-row">
+        <div class="card-sub">Depósitos del turno</div>
+        <div>${val(r.depositos_efectivo)} · Dif ajustada ${val(r.diferencia_efectivo_ajustada)}</div>
+      </div>`;
+  }
+
   function terminalHtml(r) {
     const sinDatos = r.terminal_transferencia === null && r.terminal_tarjeta === null && r.terminal_total === null;
     if (sinDatos) return "";
@@ -98,6 +118,18 @@ const ViewCaja = (() => {
       ${filas}`;
   }
 
+  function depositosDetalleHtml(r) {
+    if (!r.depositos || !r.depositos.length) return "";
+    const filas = r.depositos.map(d => `
+      <div class="card-row">
+        <div class="card-sub">${d.turno ? Utils.escapeHtml(d.turno) : "Turno sin especificar"}${d.registrado_por ? " · " + Utils.escapeHtml(d.registrado_por) : ""}</div>
+        <div>${val(d.monto_total)}</div>
+      </div>`).join("");
+    return `
+      <div class="card-detail-label">Depósitos en efectivo del turno</div>
+      ${filas}`;
+  }
+
   function cardReporte(r) {
     const tituloFecha = r.fecha_apertura
       ? Utils.fechaLarga(r.fecha_apertura)
@@ -115,6 +147,7 @@ const ViewCaja = (() => {
         <div class="card-row" style="flex-wrap: wrap; gap: 6px; margin-top: 6px;">
           ${badgeDiferenciaTotal(r)}
           ${badgeEgresosComprobantes(r)}
+          ${badgeDepositosEfectivo(r)}
         </div>
         <div class="card-detail">
           <div class="card-detail-label">Apertura / Cierre</div>
@@ -128,12 +161,15 @@ const ViewCaja = (() => {
 
           <div class="card-detail-label">Fuente / Usado / Diferencia</div>
           ${filaMedioPago("Efectivo", r.total_fuente_efectivo, r.total_usado_efectivo, r.diferencia_efectivo)}
+          ${filaDepositoEfectivo(r)}
           ${filaMedioPago("Tarjeta", r.total_fuente_tarjeta, r.total_usado_tarjeta, r.diferencia_tarjeta)}
           <div class="card-row"><div class="card-sub">Total</div><div>Dif ${val(r.diferencia_total)}</div></div>
 
           ${terminalHtml(r)}
 
           ${comprobantesDetalleHtml(r)}
+
+          ${depositosDetalleHtml(r)}
         </div>
       </div>`;
   }
