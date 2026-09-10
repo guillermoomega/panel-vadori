@@ -78,13 +78,13 @@ const ViewCaja = (() => {
 
   function badgeDepositosEfectivo(r) {
     if (!r.depositos_efectivo) return "";
-    if (r.diferencia_efectivo_ajustada === null || r.diferencia_efectivo_ajustada === undefined) {
-      return `<span class="badge badge-neutral">Depósitos registrados, sin diferencia de efectivo para ajustar</span>`;
+    if (r.diferencia_deposito_vs_usado === null || r.diferencia_deposito_vs_usado === undefined) {
+      return `<span class="badge badge-neutral">Depósitos registrados, sin efectivo contado para comparar</span>`;
     }
-    if (Math.abs(r.diferencia_efectivo_ajustada) < 1) {
-      return `<span class="badge badge-ok">Efectivo cuadra considerando depósitos</span>`;
+    if (Math.abs(r.diferencia_deposito_vs_usado) < 1) {
+      return `<span class="badge badge-ok">Depósito coincide con el efectivo contado</span>`;
     }
-    return `<span class="badge badge-warn">Efectivo con depósitos: diferencia ${Utils.formatMonto(r.diferencia_efectivo_ajustada)}</span>`;
+    return `<span class="badge badge-warn">Depósito vs. efectivo contado: diferencia ${Utils.formatMonto(r.diferencia_deposito_vs_usado)}</span>`;
   }
 
   function filaDepositoEfectivo(r) {
@@ -92,8 +92,19 @@ const ViewCaja = (() => {
     return `
       <div class="card-row">
         <div class="card-sub">Depósitos del turno</div>
-        <div>${val(r.depositos_efectivo)} · Dif ajustada ${val(r.diferencia_efectivo_ajustada)}</div>
+        <div>${val(r.depositos_efectivo)} · Dif vs. contado ${val(r.diferencia_deposito_vs_usado)}</div>
       </div>`;
+  }
+
+  function badgeTerminalVsUsado(r) {
+    if (r.terminal_total === null || r.terminal_total === undefined) return "";
+    if (r.diferencia_terminal_vs_usado === null || r.diferencia_terminal_vs_usado === undefined) {
+      return `<span class="badge badge-neutral">Cierre de lote registrado, sin tarjeta contada para comparar</span>`;
+    }
+    if (Math.abs(r.diferencia_terminal_vs_usado) < 1) {
+      return `<span class="badge badge-ok">Cierre de lote coincide con la tarjeta contada</span>`;
+    }
+    return `<span class="badge badge-warn">Cierre de lote vs. tarjeta contada: diferencia ${Utils.formatMonto(r.diferencia_terminal_vs_usado)}</span>`;
   }
 
   function terminalHtml(r) {
@@ -103,7 +114,7 @@ const ViewCaja = (() => {
       <div class="card-detail-label">Cierre de lote (terminal)</div>
       <div class="card-row"><div class="card-sub">Transferencia/QR</div><div>${val(r.terminal_transferencia)}</div></div>
       <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.terminal_tarjeta)}</div></div>
-      <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)}</div></div>`;
+      <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)} · Dif vs. contado ${val(r.diferencia_terminal_vs_usado)}</div></div>`;
   }
 
   function comprobantesDetalleHtml(r) {
@@ -148,6 +159,7 @@ const ViewCaja = (() => {
           ${badgeDiferenciaTotal(r)}
           ${badgeEgresosComprobantes(r)}
           ${badgeDepositosEfectivo(r)}
+          ${badgeTerminalVsUsado(r)}
         </div>
         <div class="card-detail">
           <div class="card-detail-label">Apertura / Cierre</div>
