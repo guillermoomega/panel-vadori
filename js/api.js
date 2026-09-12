@@ -33,7 +33,12 @@ const Api = (() => {
       throw new Error("Acceso rechazado (403) — clave del panel inválida o faltante.");
     }
     if (!res.ok) {
-      throw new Error(`Error del servidor (${res.status})`);
+      let mensaje = `Error del servidor (${res.status})`;
+      try {
+        const data = await res.json();
+        if (data && data.error) mensaje = data.error;
+      } catch (_) { /* respuesta sin cuerpo JSON */ }
+      throw new Error(mensaje);
     }
     return res.json();
   }
@@ -48,6 +53,9 @@ const Api = (() => {
     walkin: (turno, adultos, ninios) => post("/walkin", { turno, adultos, ninios }),
     horas: (rango) => get("/horas", rango || {}),
     pagarHoras: (rango) => post("/horas/pagar", rango || {}),
-    caja: (rango) => get("/caja", rango || {})
+    caja: (rango) => get("/caja", rango || {}),
+    fichajes: (rango) => get("/fichajes", rango || {}),
+    editarFichaje: (id, fecha, hora) => post("/fichajes/editar", { id, fecha, hora }),
+    crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora })
   };
 })();

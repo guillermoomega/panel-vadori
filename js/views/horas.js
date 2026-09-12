@@ -7,11 +7,25 @@ const ViewHoras = (() => {
   let ultimoData = null;
   let pagando = false;
 
+  let fichajesData = null;
+  let fichajesVisibles = false;
+  let editandoId = null;
+  let nuevoFichajeVisible = false;
+  let guardandoFichaje = false;
+
   function formatFechaHora(iso) {
     const d = new Date(iso);
     const fecha = d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Argentina/Buenos_Aires" });
     const hora = d.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
     return `${fecha} ${hora}`;
+  }
+
+  function isoAFechaInput(iso) {
+    return new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
+  }
+
+  function isoAHoraInput(iso) {
+    return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
   }
 
   function attachListeners() {
@@ -30,20 +44,141 @@ const ViewHoras = (() => {
         const hasta = document.getElementById("horas-input-hasta").value;
         if (!desde || !hasta) return;
         rangoOverride = { desde, hasta };
+        resetEstadoFichajes();
         render();
         return;
       }
       const btnReset = ev.target.closest("#horas-btn-reset");
       if (btnReset) {
         rangoOverride = null;
+        resetEstadoFichajes();
         render();
         return;
       }
       const btnPagar = ev.target.closest("#horas-btn-pagar");
       if (btnPagar) {
         pagar();
+        return;
+      }
+      const btnFichajes = ev.target.closest("#horas-btn-fichajes");
+      if (btnFichajes) {
+        toggleFichajes();
+        return;
+      }
+      const btnNuevoToggle = ev.target.closest("#horas-btn-nuevo-fichaje");
+      if (btnNuevoToggle) {
+        nuevoFichajeVisible = !nuevoFichajeVisible;
+        editandoId = null;
+        rerenderContent();
+        return;
+      }
+      const btnGuardarNuevo = ev.target.closest("#horas-btn-guardar-nuevo");
+      if (btnGuardarNuevo) {
+        guardarNuevoFichaje();
+        return;
+      }
+      const btnEditar = ev.target.closest(".btn-editar-fichaje");
+      if (btnEditar) {
+        editandoId = btnEditar.dataset.id;
+        nuevoFichajeVisible = false;
+        rerenderContent();
+        return;
+      }
+      const btnCancelarEdit = ev.target.closest(".btn-cancelar-fichaje");
+      if (btnCancelarEdit) {
+        editandoId = null;
+        rerenderContent();
+        return;
+      }
+      const btnGuardarEdit = ev.target.closest(".btn-guardar-fichaje");
+      if (btnGuardarEdit) {
+        guardarEdicionFichaje(btnGuardarEdit.dataset.id);
       }
     });
+  }
+
+  function rerenderContent() {
+    if (ultimoData) renderContent(ultimoData);
+  }
+
+  function resetEstadoFichajes() {
+    fichajesData = null;
+    fichajesVisibles = false;
+    editandoId = null;
+    nuevoFichajeVisible = false;
+  }
+
+  async function toggleFichajes() {
+    if (fichajesVisibles) {
+      fichajesVisibles = false;
+      rerenderContent();
+      return;
+    }
+    fichajesVisibles = true;
+    if (fichajesData) {
+      rerenderContent();
+      return;
+    }
+    elEstado().textContent = "Cargando fichajes…";
+    try {
+      fichajesData = await Api.fichajes(rangoOverride);
+      elEstado().textContent = "";
+      rerenderContent();
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+    }
+  }
+
+  async function guardarNuevoFichaje() {
+    if (guardandoFichaje) return;
+    const nombre = document.getElementById("fichaje-nuevo-nombre").value.trim();
+    const tipo = document.getElementById("fichaje-nuevo-tipo").value;
+    const fecha = document.getElementById("fichaje-nuevo-fecha").value;
+    const hora = document.getElementById("fichaje-nuevo-hora").value;
+    if (!nombre || !fecha || !hora) return;
+
+    guardandoFichaje = true;
+    const btn = document.getElementById("horas-btn-guardar-nuevo");
+    if (btn) { btn.disabled = true; btn.textContent = "Guardando…"; }
+    elEstado().textContent = "";
+    elEstado().classList.remove("error");
+    try {
+      await Api.crearFichaje({ nombre, tipo, fecha, hora });
+      nuevoFichajeVisible = false;
+      if (fichajesVisibles) fichajesData = await Api.fichajes(rangoOverride);
+      await render();
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+      const btnAfter = document.getElementById("horas-btn-guardar-nuevo");
+      if (btnAfter) { btnAfter.disabled = false; btnAfter.textContent = "Agregar"; }
+    } finally {
+      guardandoFichaje = false;
+    }
+  }
+
+  async function guardarEdicionFichaje(id) {
+    if (guardandoFichaje) return;
+    const fila = document.querySelector(`.mesa-row[data-id="${id}"]`);
+    const fecha = fila.querySelector(".fichaje-input-fecha").value;
+    const hora = fila.querySelector(".fichaje-input-hora").value;
+    if (!fecha || !hora) return;
+
+    guardandoFichaje = true;
+    elEstado().textContent = "";
+    elEstado().classList.remove("error");
+    try {
+      await Api.editarFichaje(id, fecha, hora);
+      editandoId = null;
+      fichajesData = await Api.fichajes(rangoOverride);
+      await render();
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+    } finally {
+      guardandoFichaje = false;
+    }
   }
 
   async function pagar() {
@@ -99,6 +234,70 @@ const ViewHoras = (() => {
       </div>`;
   }
 
+  function filaFichaje(f) {
+    if (editandoId === f.id) {
+      return `
+        <div class="mesa-row" data-id="${f.id}">
+          <div class="mesa-row-info">
+            <div>${Utils.escapeHtml(f.nombre || "?")} — ${Utils.escapeHtml(f.tipo || "?")}</div>
+            <div class="mesa-row-sub">
+              <input type="date" class="input-fecha fichaje-input-fecha" value="${isoAFechaInput(f.timestamp)}">
+              <input type="time" class="input-fecha fichaje-input-hora" value="${isoAHoraInput(f.timestamp)}">
+            </div>
+          </div>
+          <div class="card-right">
+            <button type="button" class="btn-link btn-guardar-fichaje" data-id="${f.id}">Guardar</button>
+            <button type="button" class="btn-link btn-cancelar-fichaje">Cancelar</button>
+          </div>
+        </div>`;
+    }
+    const notaHtml = f.tiene_timpstamp ? "" : ` <span class="badge badge-warn">Hora aproximada</span>`;
+    return `
+      <div class="mesa-row" data-id="${f.id}">
+        <div class="mesa-row-info">
+          <div>${Utils.escapeHtml(f.nombre || "?")} — ${Utils.escapeHtml(f.tipo || "?")}</div>
+          <div class="mesa-row-sub">${formatFechaHora(f.timestamp)}${notaHtml}</div>
+        </div>
+        <button type="button" class="btn-link btn-editar-fichaje" data-id="${f.id}">Editar</button>
+      </div>`;
+  }
+
+  function fichajesSectionHtml() {
+    const ahora = new Date();
+    const nuevoFormHtml = `
+      <div id="fichaje-nuevo-form" class="card-walkin-form" ${nuevoFichajeVisible ? "" : "hidden"}>
+        <input type="text" id="fichaje-nuevo-nombre" class="input-fecha" placeholder="Nombre">
+        <select id="fichaje-nuevo-tipo" class="input-fecha">
+          <option value="Entrada">Entrada</option>
+          <option value="Salida">Salida</option>
+        </select>
+        <input type="date" id="fichaje-nuevo-fecha" class="input-fecha" value="${isoAFechaInput(ahora)}">
+        <input type="time" id="fichaje-nuevo-hora" class="input-fecha" value="${isoAHoraInput(ahora)}">
+        <button type="button" id="horas-btn-guardar-nuevo" class="btn-walkin-confirmar">Agregar</button>
+      </div>`;
+
+    let listaFichajesHtml = "";
+    if (fichajesVisibles) {
+      if (!fichajesData) {
+        listaFichajesHtml = `<div class="empty-msg">Cargando…</div>`;
+      } else if (fichajesData.fichajes.length) {
+        listaFichajesHtml = `<div class="card">${fichajesData.fichajes.map(filaFichaje).join("")}</div>`;
+      } else {
+        listaFichajesHtml = `<div class="empty-msg">Sin fichajes registrados en este período.</div>`;
+      }
+    }
+
+    return `
+      <div class="section-title">Fichajes</div>
+      <div class="horas-periodo">
+        <button type="button" id="horas-btn-fichajes" class="btn-link">${fichajesVisibles ? "Ocultar detalle" : "Ver detalle"}</button>
+        <button type="button" id="horas-btn-nuevo-fichaje" class="btn-link">${nuevoFichajeVisible ? "Cancelar" : "+ Agregar fichaje"}</button>
+      </div>
+      ${nuevoFormHtml}
+      ${listaFichajesHtml}
+    `;
+  }
+
   function renderContent(data) {
     ultimoData = data;
     const desdeStr = data.desde.slice(0, 10);
@@ -145,6 +344,7 @@ const ViewHoras = (() => {
       </div>
 
       ${sinResolverHtml}
+      ${fichajesSectionHtml()}
     `;
   }
 
