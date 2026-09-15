@@ -140,6 +140,7 @@ const ViewCheckins = (() => {
         <div class="card-row">
           <div class="card-main">
             <div class="card-title">${Utils.escapeHtml(r.huesped || "Sin nombre")}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
+            <div class="card-sub">${Utils.escapeHtml(Utils.rangoFechas(r.checkin, r.checkout))}</div>
             <div class="card-sub">${sub}</div>
           </div>
           <div class="card-meta">
