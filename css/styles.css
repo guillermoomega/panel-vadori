@@ -511,6 +511,22 @@ body {
   border-color: var(--accent);
 }
 
+/* --- Pestañas de área (nivel 2 de navegación) --- */
+
+.area-tabs[hidden] { display: none; }
+
+.area-tabs {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.area-tabs::-webkit-scrollbar { display: none; }
+
+.area-tabs .rango-tab {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 /* --- Calendario --- */
 
 #calendar {

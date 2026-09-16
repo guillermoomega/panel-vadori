@@ -19,26 +19,23 @@
 </header>
 
 <main id="app">
-  <section id="view-calendario" class="view" hidden>
-    <div class="view-toolbar">
-      <div id="calendario-estado" class="estado-msg"></div>
-    </div>
-    <div id="calendar"></div>
-  </section>
+  <nav class="rango-tabs area-tabs" data-area="suites" hidden>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="checkins">Check-ins</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="calendario">Calendario</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="estado">Estado</button>
+  </nav>
+
+  <nav class="rango-tabs area-tabs" data-area="administracion" hidden>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="caja">Caja</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="horas">Horas</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="resumen">Resumen</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="cuenta-corriente">Cta. corriente</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="proveedores">Proveedores</button>
+  </nav>
 
   <section id="view-hoy" class="view" hidden>
     <div id="hoy-estado" class="estado-msg"></div>
     <div id="hoy-content"></div>
-  </section>
-
-  <section id="view-limpieza" class="view" hidden>
-    <div id="limpieza-estado" class="estado-msg"></div>
-    <div id="limpieza-grid" class="unidades-grid"></div>
-  </section>
-
-  <section id="view-horas" class="view" hidden>
-    <div id="horas-estado" class="estado-msg"></div>
-    <div id="horas-content"></div>
   </section>
 
   <section id="view-checkins" class="view" hidden>
@@ -46,9 +43,26 @@
     <div id="checkins-content"></div>
   </section>
 
+  <section id="view-calendario" class="view" hidden>
+    <div class="view-toolbar">
+      <div id="calendario-estado" class="estado-msg"></div>
+    </div>
+    <div id="calendar"></div>
+  </section>
+
+  <section id="view-limpieza" class="view" hidden>
+    <div id="limpieza-estado" class="estado-msg"></div>
+    <div id="limpieza-grid" class="unidades-grid"></div>
+  </section>
+
   <section id="view-caja" class="view" hidden>
     <div id="caja-estado" class="estado-msg"></div>
     <div id="caja-content"></div>
+  </section>
+
+  <section id="view-horas" class="view" hidden>
+    <div id="horas-estado" class="estado-msg"></div>
+    <div id="horas-content"></div>
   </section>
 
   <section id="view-resumen" class="view" hidden>
@@ -60,40 +74,32 @@
     <div id="cuenta-corriente-estado" class="estado-msg"></div>
     <div id="cuenta-corriente-content"></div>
   </section>
+
+  <section id="view-proveedores" class="view" hidden>
+    <div class="empty-msg">Próximamente.</div>
+  </section>
+
+  <section id="view-mas" class="view" hidden>
+    <div class="empty-msg">Próximamente.</div>
+  </section>
 </main>
 
 <nav class="tabbar">
-  <button type="button" class="tab-btn" data-view="hoy">
+  <button type="button" class="tab-btn" data-area="hoy">
     <span class="tab-icon">☀</span>
     <span>Hoy</span>
   </button>
-  <button type="button" class="tab-btn" data-view="calendario">
-    <span class="tab-icon">▦</span>
-    <span>Calendario</span>
-  </button>
-  <button type="button" class="tab-btn" data-view="limpieza">
+  <button type="button" class="tab-btn" data-area="suites">
     <span class="tab-icon">✓</span>
-    <span>Est. Suites</span>
+    <span>Suites</span>
   </button>
-  <button type="button" class="tab-btn" data-view="horas">
-    <span class="tab-icon">⏱</span>
-    <span>Horas</span>
-  </button>
-  <button type="button" class="tab-btn" data-view="checkins">
-    <span class="tab-icon">▤</span>
-    <span>Check-ins</span>
-  </button>
-  <button type="button" class="tab-btn" data-view="caja">
+  <button type="button" class="tab-btn" data-area="administracion">
     <span class="tab-icon">$</span>
-    <span>Caja</span>
+    <span>Administración</span>
   </button>
-  <button type="button" class="tab-btn" data-view="resumen">
-    <span class="tab-icon">Σ</span>
-    <span>Resumen</span>
-  </button>
-  <button type="button" class="tab-btn" data-view="cuenta-corriente">
-    <span class="tab-icon">⇄</span>
-    <span>Cta. corriente</span>
+  <button type="button" class="tab-btn" data-area="mas">
+    <span class="tab-icon">⋯</span>
+    <span>Más</span>
   </button>
 </nav>
 

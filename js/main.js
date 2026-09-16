@@ -1,43 +1,90 @@
 (() => {
-  const views = {
-    hoy: { section: document.getElementById("view-hoy"), render: ViewHoy.render, loaded: false },
-    calendario: { section: document.getElementById("view-calendario"), render: ViewCalendario.render, loaded: false },
-    limpieza: { section: document.getElementById("view-limpieza"), render: ViewLimpieza.render, loaded: false },
-    horas: { section: document.getElementById("view-horas"), render: ViewHoras.render, loaded: false },
-    checkins: { section: document.getElementById("view-checkins"), render: ViewCheckins.render, loaded: false },
-    caja: { section: document.getElementById("view-caja"), render: ViewCaja.render, loaded: false },
-    resumen: { section: document.getElementById("view-resumen"), render: ViewResumenSemanal.render, loaded: false },
-    "cuenta-corriente": { section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false }
+  const AREA_DEFAULT = {
+    hoy: "hoy",
+    suites: "checkins",
+    administracion: "caja",
+    mas: "mas"
   };
 
-  function showView(name) {
-    Object.entries(views).forEach(([key, v]) => {
-      v.section.hidden = key !== name;
-    });
+  const views = {
+    hoy:                { area: "hoy",           section: document.getElementById("view-hoy"),              render: ViewHoy.render,             loaded: false },
+    checkins:           { area: "suites",         section: document.getElementById("view-checkins"),         render: ViewCheckins.render,        loaded: false },
+    calendario:         { area: "suites",         section: document.getElementById("view-calendario"),       render: ViewCalendario.render,      loaded: false },
+    estado:             { area: "suites",         section: document.getElementById("view-limpieza"),         render: ViewLimpieza.render,        loaded: false },
+    caja:               { area: "administracion", section: document.getElementById("view-caja"),             render: ViewCaja.render,            loaded: false },
+    horas:              { area: "administracion", section: document.getElementById("view-horas"),            render: ViewHoras.render,           loaded: false },
+    resumen:            { area: "administracion", section: document.getElementById("view-resumen"),          render: ViewResumenSemanal.render,  loaded: false },
+    "cuenta-corriente": { area: "administracion", section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false },
+    proveedores:        { area: "administracion", section: document.getElementById("view-proveedores"),      render: null,                       loaded: true },
+    mas:                { area: "mas",            section: document.getElementById("view-mas"),              render: null,                       loaded: true }
+  };
+
+  let seccionActiva = null;
+  const ultimaSeccion = {}; // area -> seccion, para volver a la última pestaña usada de cada área
+
+  function cargarUltimaSeccion() {
+    try {
+      Object.assign(ultimaSeccion, JSON.parse(localStorage.getItem("panel-vadori-secciones") || "{}"));
+    } catch (_) {
+      // localStorage corrupto o vacío: se ignora y queda el objeto vacío
+    }
+  }
+
+  function guardarUltimaSeccion() {
+    localStorage.setItem("panel-vadori-secciones", JSON.stringify(ultimaSeccion));
+  }
+
+  function showArea(area) {
     document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.view === name);
+      btn.classList.toggle("active", btn.dataset.area === area);
+    });
+    document.querySelectorAll(".area-tabs").forEach(nav => {
+      nav.hidden = nav.dataset.area !== area;
     });
 
-    const view = views[name];
-    view.render();
-    view.loaded = true;
+    localStorage.setItem("panel-vadori-area", area);
+    showSeccion(ultimaSeccion[area] || AREA_DEFAULT[area]);
+  }
 
-    localStorage.setItem("panel-vadori-tab", name);
+  function showSeccion(seccion) {
+    const view = views[seccion];
+    if (!view) return;
+
+    seccionActiva = seccion;
+    Object.entries(views).forEach(([key, v]) => {
+      v.section.hidden = key !== seccion;
+    });
+    document.querySelectorAll(".area-tab-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.seccion === seccion);
+    });
+
+    if (view.render && !view.loaded) {
+      view.render();
+      view.loaded = true;
+    }
+
+    ultimaSeccion[view.area] = seccion;
+    guardarUltimaSeccion();
   }
 
   document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => showView(btn.dataset.view));
+    btn.addEventListener("click", () => showArea(btn.dataset.area));
+  });
+
+  document.querySelectorAll(".area-tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => showSeccion(btn.dataset.seccion));
   });
 
   document.getElementById("fecha-hoy").textContent = Utils.fechaLarga(Utils.todayISO());
 
-  const tabGuardada = localStorage.getItem("panel-vadori-tab");
-  showView(views[tabGuardada] ? tabGuardada : "hoy");
+  cargarUltimaSeccion();
+  const areaGuardada = localStorage.getItem("panel-vadori-area");
+  showArea(AREA_DEFAULT.hasOwnProperty(areaGuardada) ? areaGuardada : "hoy");
 
-  // Refresco automático liviano: al volver a foco la pestaña, recargar la vista activa.
+  // Refresco automático liviano: al volver a foco la pestaña, recargar la sección activa.
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
-    const activo = document.querySelector(".tab-btn.active");
-    if (activo) views[activo.dataset.view].render();
+    const view = views[seccionActiva];
+    if (view && view.render) view.render();
   });
 })();
