@@ -3,6 +3,9 @@ const ViewCuentaCorriente = (() => {
   const elContent = () => document.getElementById("cuenta-corriente-content");
 
   let rangoOverride = null; // { desde, hasta } en YYYY-MM-DD, o null = rango por defecto del backend
+  let proveedorFiltro = null; // nombre exacto del proveedor, o null = todos
+  let selectedIds = new Set();
+  let ultimaData = null;
   let listenersAttached = false;
 
   function attachListeners() {
@@ -30,17 +33,55 @@ const ViewCuentaCorriente = (() => {
         render();
         return;
       }
+      const btnProveedor = ev.target.closest("#cc-btn-proveedor");
+      if (btnProveedor) {
+        const form = document.getElementById("cc-proveedor-form");
+        form.hidden = !form.hidden;
+        return;
+      }
+      const btnProveedorReset = ev.target.closest("#cc-btn-proveedor-reset");
+      if (btnProveedorReset) {
+        proveedorFiltro = null;
+        rerenderLocal();
+        return;
+      }
+      const btnPagarSel = ev.target.closest("#cc-btn-pagar-seleccionados");
+      if (btnPagarSel) {
+        await handleMarcarPagadoBulk();
+        return;
+      }
       const btnMarcar = ev.target.closest(".btn-marcar-pagado");
       if (btnMarcar) {
         await handleMarcarPagado(btnMarcar);
         return;
       }
       const card = ev.target.closest(".card-clickable");
-      if (card && !ev.target.closest(".card-marcar-pagado")) {
+      if (card && !ev.target.closest(".card-marcar-pagado") && !ev.target.closest(".card-check")) {
         const detalle = card.querySelector(".card-detail");
         if (detalle) detalle.hidden = !detalle.hidden;
       }
     });
+
+    elContent().addEventListener("change", (ev) => {
+      const selProveedor = ev.target.closest("#cc-select-proveedor");
+      if (selProveedor) {
+        proveedorFiltro = selProveedor.value || null;
+        rerenderLocal();
+        return;
+      }
+      const chk = ev.target.closest(".cc-check");
+      if (chk) {
+        const id = chk.dataset.id;
+        if (chk.checked) selectedIds.add(id);
+        else selectedIds.delete(id);
+        rerenderLocal();
+      }
+    });
+  }
+
+  function rerenderLocal() {
+    if (!ultimaData) return;
+    renderContent(ultimaData);
   }
 
   async function handleMarcarPagado(btn) {
@@ -68,6 +109,32 @@ const ViewCuentaCorriente = (() => {
     }
   }
 
+  async function handleMarcarPagadoBulk() {
+    const select = document.getElementById("cc-bulk-origen");
+    const origen_pago = select.value;
+    if (!origen_pago) {
+      select.focus();
+      return;
+    }
+    const btn = document.getElementById("cc-btn-pagar-seleccionados");
+    btn.disabled = true;
+    select.disabled = true;
+    btn.textContent = "Marcando…";
+    let error = null;
+    for (const id of Array.from(selectedIds)) {
+      try {
+        const res = await Api.marcarPagadoCC(id, origen_pago);
+        if (!res.ok) throw new Error(res.error || "No se pudo marcar el comprobante como pagado.");
+        selectedIds.delete(id);
+      } catch (err) {
+        error = err;
+        break;
+      }
+    }
+    await render();
+    if (error) alert(error.message);
+  }
+
   function badgeDias(dias) {
     if (dias === null || dias === undefined) return "";
     let clase = "badge-neutral";
@@ -92,9 +159,14 @@ const ViewCuentaCorriente = (() => {
       ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
+    const checked = selectedIds.has(c.id) ? " checked" : "";
+
     return `
       <div class="card${tieneDetalle ? " card-clickable" : ""}">
         <div class="card-row">
+          <label class="card-check">
+            <input type="checkbox" class="cc-check" data-id="${Utils.escapeHtml(c.id)}"${checked}>
+          </label>
           <div class="card-main">
             <div class="card-title">${Utils.escapeHtml(c.proveedor || "Sin proveedor")}</div>
             <div class="card-sub">${sub}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
@@ -117,15 +189,37 @@ const ViewCuentaCorriente = (() => {
   }
 
   function renderContent(data) {
-    const items = data.comprobantes || [];
+    ultimaData = data;
+    const itemsTodos = data.comprobantes || [];
+    const proveedores = Array.from(new Set(itemsTodos.map(c => c.proveedor).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es"));
+    const items = proveedorFiltro ? itemsTodos.filter(c => c.proveedor === proveedorFiltro) : itemsTodos;
+
     const contenido = items.length
       ? items.map(cardComprobante).join("")
-      : `<div class="empty-msg">Sin pagos pendientes en cuenta corriente en este período.</div>`;
+      : `<div class="empty-msg">Sin pagos pendientes en cuenta corriente en este período${proveedorFiltro ? " para este proveedor" : ""}.</div>`;
+
+    const seleccionActiva = itemsTodos.filter(c => selectedIds.has(c.id));
+    const totalSeleccionado = seleccionActiva.reduce((sum, c) => sum + (c.monto || 0), 0);
+    const bulkBar = seleccionActiva.length
+      ? `
+      <div class="card">
+        <div class="card-title">${seleccionActiva.length} comprobante${seleccionActiva.length === 1 ? "" : "s"} seleccionado${seleccionActiva.length === 1 ? "" : "s"} · ${Utils.formatMonto(totalSeleccionado)}</div>
+        <div class="card-asignar card-marcar-pagado">
+          <select class="select-unidad select-origen-pago" id="cc-bulk-origen">
+            <option value="">Elegir caja…</option>
+            <option value="Caja GV">Caja GV</option>
+            <option value="Caja GO">Caja GO</option>
+          </select>
+          <button type="button" class="btn-asignar" id="cc-btn-pagar-seleccionados">Pagar seleccionados</button>
+        </div>
+      </div>`
+      : "";
 
     elContent().innerHTML = `
       <div class="horas-periodo">
         Período: <strong>${Utils.fechaLarga(data.desde)}</strong> → <strong>${Utils.fechaLarga(data.hasta)}</strong>
         <button type="button" id="cc-btn-rango" class="btn-link">Cambiar rango</button>
+        <button type="button" id="cc-btn-proveedor" class="btn-link">Proveedor${proveedorFiltro ? `: ${Utils.escapeHtml(proveedorFiltro)}` : ""}</button>
       </div>
       <div id="cc-rango-form" class="card-walkin-form" hidden>
         <input type="date" id="cc-input-desde" class="input-fecha" value="${data.desde}">
@@ -134,8 +228,16 @@ const ViewCuentaCorriente = (() => {
         <button type="button" id="cc-btn-aplicar" class="btn-walkin-confirmar">Aplicar</button>
         ${rangoOverride ? `<button type="button" id="cc-btn-reset" class="btn-link">Por defecto</button>` : ""}
       </div>
+      <div id="cc-proveedor-form" class="card-walkin-form" hidden>
+        <select id="cc-select-proveedor" class="select-unidad">
+          <option value="">Todos los proveedores</option>
+          ${proveedores.map(p => `<option value="${Utils.escapeHtml(p)}"${p === proveedorFiltro ? " selected" : ""}>${Utils.escapeHtml(p)}</option>`).join("")}
+        </select>
+        ${proveedorFiltro ? `<button type="button" id="cc-btn-proveedor-reset" class="btn-link">Quitar filtro</button>` : ""}
+      </div>
 
       <div class="section-title">Total pendiente: ${Utils.formatMonto(data.total_pendiente)}</div>
+      ${bulkBar}
       ${contenido}
     `;
   }

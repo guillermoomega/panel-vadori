@@ -529,3 +529,19 @@ body {
 .fc-event.estado-pendiente { background: var(--warn); }
 .fc-event.estado-cancelada { background: var(--neutral); text-decoration: line-through; }
 .fc-event.tipo-mesa { opacity: 0.85; }
+
+/* --- Cuenta corriente --- */
+
+.card-check {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.card-check input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
