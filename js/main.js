@@ -6,7 +6,8 @@
     horas: { section: document.getElementById("view-horas"), render: ViewHoras.render, loaded: false },
     checkins: { section: document.getElementById("view-checkins"), render: ViewCheckins.render, loaded: false },
     caja: { section: document.getElementById("view-caja"), render: ViewCaja.render, loaded: false },
-    resumen: { section: document.getElementById("view-resumen"), render: ViewResumenSemanal.render, loaded: false }
+    resumen: { section: document.getElementById("view-resumen"), render: ViewResumenSemanal.render, loaded: false },
+    "cuenta-corriente": { section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false }
   };
 
   function showView(name) {

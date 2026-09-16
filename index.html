@@ -55,6 +55,11 @@
     <div id="resumen-estado" class="estado-msg"></div>
     <div id="resumen-content"></div>
   </section>
+
+  <section id="view-cuenta-corriente" class="view" hidden>
+    <div id="cuenta-corriente-estado" class="estado-msg"></div>
+    <div id="cuenta-corriente-content"></div>
+  </section>
 </main>
 
 <nav class="tabbar">
@@ -86,6 +91,10 @@
     <span class="tab-icon">Σ</span>
     <span>Resumen</span>
   </button>
+  <button type="button" class="tab-btn" data-view="cuenta-corriente">
+    <span class="tab-icon">⇄</span>
+    <span>Cta. corriente</span>
+  </button>
 </nav>
 
 <script src="js/config.js"></script>
@@ -99,6 +108,7 @@
 <script src="js/views/checkins.js"></script>
 <script src="js/views/caja.js"></script>
 <script src="js/views/resumen_semanal.js"></script>
+<script src="js/views/cuenta_corriente.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

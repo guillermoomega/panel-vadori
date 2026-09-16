@@ -54,6 +54,8 @@ const Api = (() => {
     horas: (rango) => get("/horas", rango || {}),
     pagarHoras: (rango) => post("/horas/pagar", rango || {}),
     caja: (rango) => get("/caja", rango || {}),
+    cuentaCorriente: (rango) => get("/cuenta-corriente", rango || {}),
+    marcarPagadoCC: (id, origen_pago) => post("/cuenta-corriente/pagar", { id, origen_pago }),
     fichajes: (rango) => get("/fichajes", rango || {}),
     editarFichaje: (id, fecha, hora) => post("/fichajes/editar", { id, fecha, hora }),
     crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora })
