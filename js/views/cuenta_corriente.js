@@ -78,7 +78,7 @@ const ViewCuentaCorriente = (() => {
 
   function cardComprobante(c) {
     const subPartes = [];
-    if (c.proveedor) subPartes.push(c.proveedor);
+    subPartes.push(Utils.fechaLarga(c.fecha));
     if (c.categoria) subPartes.push(c.categoria);
     if (c.negocio) subPartes.push(c.negocio);
     const sub = subPartes.map(Utils.escapeHtml).join(" · ");
@@ -96,8 +96,8 @@ const ViewCuentaCorriente = (() => {
       <div class="card${tieneDetalle ? " card-clickable" : ""}">
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(Utils.fechaLarga(c.fecha))}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
-            <div class="card-sub">${sub}</div>
+            <div class="card-title">${Utils.escapeHtml(c.proveedor || "Sin proveedor")}</div>
+            <div class="card-sub">${sub}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
           </div>
           <div class="card-meta">
             <span class="card-hora">${Utils.formatMonto(c.monto)}</span>
