@@ -145,7 +145,8 @@ const ViewHoy = (() => {
       ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
-    const unidadesListas = unidades.filter(u => u.estado === "Lista");
+    const tipoReserva = r.tipo_unidad ? (r.tipo_unidad.trim().toLowerCase().includes("cuarto") ? "cuarto" : "suite") : null;
+    const unidadesListas = unidades.filter(u => u.estado === "Lista" && (!tipoReserva || u.tipo === tipoReserva));
     const asignar = r.sin_asignar
       ? `<div class="card-asignar">
           <select class="select-unidad">
