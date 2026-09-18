@@ -125,11 +125,13 @@ const ViewCheckins = (() => {
       ? `<div class="card-detail" hidden>${filas.map(([label, val]) => `<div class="card-detail-label">${label}</div><div>${val}</div>`).join("")}</div>`
       : "";
 
+    const tipoReserva = r.tipo_unidad ? (r.tipo_unidad.trim().toLowerCase().includes("cuarto") ? "cuarto" : "suite") : null;
+    const unidadesListas = unidades.filter(u => u.estado === "Lista" && (!tipoReserva || u.tipo === tipoReserva));
     const asignar = r.sin_asignar
       ? `<div class="card-asignar">
           <select class="select-unidad">
             <option value="">Elegir unidad…</option>
-            ${unidades.map(u => `<option value="${Utils.escapeHtml(u.id)}">${Utils.escapeHtml(u.nombre)}${u.estado && u.estado !== "Lista" ? " · " + Utils.escapeHtml(u.estado) : ""}</option>`).join("")}
+            ${unidadesListas.map(u => `<option value="${Utils.escapeHtml(u.id)}">${Utils.escapeHtml(u.nombre)}</option>`).join("")}
           </select>
           <button type="button" class="btn-asignar" data-reserva-id="${Utils.escapeHtml(r.id)}">Asignar</button>
         </div>`
