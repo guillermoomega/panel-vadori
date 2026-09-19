@@ -534,12 +534,20 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 8px;
+  --fc-neutral-bg-color: #000000;
 }
 
 .fc { font-size: 0.85rem; }
 .fc .fc-toolbar-title { font-size: 1rem; }
 .fc-event { cursor: pointer; border: none; }
 .fc-daygrid-event { white-space: normal; }
+
+.fc-col-header-cell {
+  background: var(--fc-button-bg-color);
+}
+.fc-col-header-cell .fc-col-header-cell-cushion {
+  color: #fff;
+}
 
 .fc-event.estado-confirmada { background: var(--ok); }
 .fc-event.estado-pendiente { background: var(--warn); }
