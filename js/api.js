@@ -48,6 +48,7 @@ const Api = (() => {
     hoy: () => get("/hoy"),
     limpieza: () => get("/limpieza"),
     asignar: (reserva_id, unidad_id) => post("/asignar", { reserva_id, unidad_id }),
+    cambiarEstadoUnidad: (unidad_id, estado) => post("/estado-suite", { unidad_id, estado }),
     pagar: (reserva_id) => post("/pagar", { reserva_id }),
     recibirMesa: (reserva_id) => post("/recibir", { reserva_id }),
     walkin: (turno, adultos, ninios) => post("/walkin", { turno, adultos, ninios }),
