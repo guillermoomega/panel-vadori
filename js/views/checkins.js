@@ -187,7 +187,7 @@ const ViewCheckins = (() => {
       const [data, limpieza] = await Promise.all([Api.ocupacion(desde, hasta), Api.limpieza()]);
       const unidades = limpieza.unidades || [];
       const checkins = (data.suites || [])
-        .filter(r => r.checkin >= desde && r.checkin <= hasta)
+        .filter(r => r.checkout >= desde && r.checkin <= hasta)
         .sort((a, b) => a.checkin.localeCompare(b.checkin) || (a.huesped || "").localeCompare(b.huesped || ""));
 
       const grupos = agruparPorDia(checkins);
