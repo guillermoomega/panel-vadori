@@ -53,7 +53,7 @@ const Api = (() => {
     recibirMesa: (reserva_id) => post("/recibir", { reserva_id }),
     walkin: (turno, adultos, ninios) => post("/walkin", { turno, adultos, ninios }),
     horas: (rango) => get("/horas", rango || {}),
-    pagarHoras: (rango) => post("/horas/pagar", rango || {}),
+    pagarHoras: (rango, excluidos) => post("/horas/pagar", { ...(rango || {}), excluidos: excluidos || [] }),
     caja: (rango) => get("/caja", rango || {}),
     cuentaCorriente: (rango) => get("/cuenta-corriente", rango || {}),
     marcarPagadoCC: (id, origen_pago) => post("/cuenta-corriente/pagar", { id, origen_pago }),

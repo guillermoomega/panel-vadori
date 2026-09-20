@@ -13,6 +13,8 @@ const ViewHoras = (() => {
   let nuevoFichajeVisible = false;
   let guardandoFichaje = false;
 
+  let excluidos = new Set(); // nombres excluidos del pago; se reinicia en cada carga de datos
+
   function formatFechaHora(iso) {
     const d = new Date(iso);
     const fecha = d.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long", timeZone: "America/Argentina/Buenos_Aires" });
@@ -94,6 +96,14 @@ const ViewHoras = (() => {
       if (btnGuardarEdit) {
         guardarEdicionFichaje(btnGuardarEdit.dataset.id);
       }
+    });
+    elContent().addEventListener("change", (ev) => {
+      const chk = ev.target.closest(".chk-incluir-persona");
+      if (!chk) return;
+      const nombre = chk.dataset.nombre;
+      if (chk.checked) excluidos.delete(nombre);
+      else excluidos.add(nombre);
+      rerenderContent();
     });
   }
 
@@ -181,12 +191,17 @@ const ViewHoras = (() => {
     }
   }
 
+  function totalAjustado(data) {
+    return data.personas.reduce((acc, p) => excluidos.has(p.nombre) ? acc : acc + (p.monto || 0), 0);
+  }
+
   async function pagar() {
     if (pagando || !ultimoData) return;
-    const monto = Utils.formatMonto(ultimoData.total_monto);
+    const monto = Utils.formatMonto(totalAjustado(ultimoData));
     const desdeTxt = formatFechaHora(ultimoData.desde);
     const hastaTxt = formatFechaHora(ultimoData.hasta);
-    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?\n\nSe va a generar un comprobante de gasto (sueldos, Caja GV) que después se cruza con lo egresado en el turno.`);
+    const excluidosTxt = excluidos.size ? `\n\nNo incluye a: ${[...excluidos].join(", ")}.` : "";
+    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?${excluidosTxt}\n\nSe va a generar un comprobante de gasto (sueldos, Caja GV) que después se cruza con lo egresado en el turno.`);
     if (!ok) return;
 
     pagando = true;
@@ -196,7 +211,7 @@ const ViewHoras = (() => {
     elEstado().classList.remove("error");
 
     try {
-      const res = await Api.pagarHoras(rangoOverride);
+      const res = await Api.pagarHoras(rangoOverride, [...excluidos]);
       if (!res.ok) throw new Error(res.error || "No se pudo registrar el pago.");
       elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`;
       if (btn) { btn.textContent = "✓ Pagado"; }
@@ -210,11 +225,15 @@ const ViewHoras = (() => {
   }
 
   function cardPersona(p) {
+    const incluido = !excluidos.has(p.nombre);
     const montoTxt = p.sin_tarifa
       ? `<span class="badge badge-warn">Sin tarifa</span>`
       : `<span class="card-hora">${Utils.formatMonto(p.monto)}</span>`;
     return `
-      <div class="card card-row">
+      <div class="card card-row${incluido ? "" : " card-persona-excluida"}">
+        <label class="chk-pagar-label" title="Sumar al pago">
+          <input type="checkbox" class="chk-incluir-persona" data-nombre="${Utils.escapeHtml(p.nombre)}" ${incluido ? "checked" : ""}>
+        </label>
         <div class="card-main">
           <div class="card-title">${Utils.escapeHtml(p.nombre)}</div>
           <div class="card-sub">${p.horas_texto}</div>
@@ -307,8 +326,9 @@ const ViewHoras = (() => {
       ? data.personas.map(cardPersona).join("")
       : `<div class="empty-msg">Sin fichajes registrados en este período.</div>`;
 
-    const totalTxt = data.personas.length ? Utils.formatMonto(data.total_monto) : "—";
-    const puedePagar = data.personas.length > 0 && data.total_monto > 0;
+    const totalMontoAjustado = totalAjustado(data);
+    const totalTxt = data.personas.length ? Utils.formatMonto(totalMontoAjustado) : "—";
+    const puedePagar = data.personas.length > 0 && totalMontoAjustado > 0;
 
     const sinResolverHtml = data.sin_resolver.length
       ? `
@@ -355,6 +375,7 @@ const ViewHoras = (() => {
     try {
       const data = await Api.horas(rangoOverride);
       elEstado().textContent = "";
+      excluidos = new Set();
       renderContent(data);
     } catch (err) {
       elEstado().textContent = err.message;
