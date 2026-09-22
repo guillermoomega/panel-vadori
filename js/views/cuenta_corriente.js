@@ -4,6 +4,7 @@ const ViewCuentaCorriente = (() => {
 
   let rangoOverride = null; // { desde, hasta } en YYYY-MM-DD, o null = rango por defecto del backend
   let proveedorFiltro = null; // nombre exacto del proveedor, o null = todos
+  let estadoFiltro = null; // "vencidas" | "no_vencidas" | null = todas
   let selectedIds = new Set();
   let ultimaData = null;
   let listenersAttached = false;
@@ -45,6 +46,18 @@ const ViewCuentaCorriente = (() => {
         rerenderLocal();
         return;
       }
+      const btnEstado = ev.target.closest("#cc-btn-estado");
+      if (btnEstado) {
+        const form = document.getElementById("cc-estado-form");
+        form.hidden = !form.hidden;
+        return;
+      }
+      const btnEstadoReset = ev.target.closest("#cc-btn-estado-reset");
+      if (btnEstadoReset) {
+        estadoFiltro = null;
+        rerenderLocal();
+        return;
+      }
       const btnPagarSel = ev.target.closest("#cc-btn-pagar-seleccionados");
       if (btnPagarSel) {
         await handleMarcarPagadoBulk();
@@ -66,6 +79,12 @@ const ViewCuentaCorriente = (() => {
       const selProveedor = ev.target.closest("#cc-select-proveedor");
       if (selProveedor) {
         proveedorFiltro = selProveedor.value || null;
+        rerenderLocal();
+        return;
+      }
+      const selEstado = ev.target.closest("#cc-select-estado");
+      if (selEstado) {
+        estadoFiltro = selEstado.value || null;
         rerenderLocal();
         return;
       }
@@ -143,6 +162,19 @@ const ViewCuentaCorriente = (() => {
     return `<span class="badge ${clase}">${dias} día${dias === 1 ? "" : "s"}</span>`;
   }
 
+  // Vencida = tiene fecha_vencimiento cargada y ya pasó. Sin fecha_vencimiento no se considera
+  // vencida (no hay plazo pactado con el proveedor todavía).
+  function esVencido(c) {
+    return !!c.fecha_vencimiento && c.fecha_vencimiento < Utils.todayISO();
+  }
+
+  function badgeVencido(c) {
+    if (!c.fecha_vencimiento) return "";
+    return esVencido(c)
+      ? `<span class="badge badge-bad">Vencida</span>`
+      : `<span class="badge badge-ok">No vencida</span>`;
+  }
+
   function cardComprobante(c) {
     const subPartes = [];
     subPartes.push(Utils.fechaLarga(c.fecha));
@@ -174,6 +206,7 @@ const ViewCuentaCorriente = (() => {
           <div class="card-meta">
             <span class="card-hora">${Utils.formatMonto(c.monto)}</span>
             ${badgeDias(c.dias_desde)}
+            ${badgeVencido(c)}
           </div>
         </div>
         ${detalle}
@@ -192,11 +225,17 @@ const ViewCuentaCorriente = (() => {
     ultimaData = data;
     const itemsTodos = data.comprobantes || [];
     const proveedores = Array.from(new Set(itemsTodos.map(c => c.proveedor).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es"));
-    const items = proveedorFiltro ? itemsTodos.filter(c => c.proveedor === proveedorFiltro) : itemsTodos;
+    let items = proveedorFiltro ? itemsTodos.filter(c => c.proveedor === proveedorFiltro) : itemsTodos;
+    if (estadoFiltro === "vencidas") items = items.filter(esVencido);
+    else if (estadoFiltro === "no_vencidas") items = items.filter(c => !esVencido(c));
 
+    const sinResultadosMsg = [
+      proveedorFiltro ? "para este proveedor" : "",
+      estadoFiltro === "vencidas" ? "vencidas" : estadoFiltro === "no_vencidas" ? "no vencidas" : ""
+    ].filter(Boolean).join(" ");
     const contenido = items.length
       ? items.map(cardComprobante).join("")
-      : `<div class="empty-msg">Sin pagos pendientes en cuenta corriente en este período${proveedorFiltro ? " para este proveedor" : ""}.</div>`;
+      : `<div class="empty-msg">Sin pagos pendientes en cuenta corriente en este período${sinResultadosMsg ? " " + sinResultadosMsg : ""}.</div>`;
 
     const seleccionActiva = itemsTodos.filter(c => selectedIds.has(c.id));
     const totalSeleccionado = seleccionActiva.reduce((sum, c) => sum + (c.monto || 0), 0);
@@ -220,6 +259,7 @@ const ViewCuentaCorriente = (() => {
         Período: <strong>${Utils.fechaLarga(data.desde)}</strong> → <strong>${Utils.fechaLarga(data.hasta)}</strong>
         <button type="button" id="cc-btn-rango" class="btn-link">Cambiar rango</button>
         <button type="button" id="cc-btn-proveedor" class="btn-link">Proveedor${proveedorFiltro ? `: ${Utils.escapeHtml(proveedorFiltro)}` : ""}</button>
+        <button type="button" id="cc-btn-estado" class="btn-link">Estado${estadoFiltro ? `: ${estadoFiltro === "vencidas" ? "Vencidas" : "No vencidas"}` : ""}</button>
       </div>
       <div id="cc-rango-form" class="card-walkin-form" hidden>
         <input type="date" id="cc-input-desde" class="input-fecha" value="${data.desde}">
@@ -234,6 +274,14 @@ const ViewCuentaCorriente = (() => {
           ${proveedores.map(p => `<option value="${Utils.escapeHtml(p)}"${p === proveedorFiltro ? " selected" : ""}>${Utils.escapeHtml(p)}</option>`).join("")}
         </select>
         ${proveedorFiltro ? `<button type="button" id="cc-btn-proveedor-reset" class="btn-link">Quitar filtro</button>` : ""}
+      </div>
+      <div id="cc-estado-form" class="card-walkin-form" hidden>
+        <select id="cc-select-estado" class="select-unidad">
+          <option value="">Todas</option>
+          <option value="vencidas"${estadoFiltro === "vencidas" ? " selected" : ""}>Vencidas</option>
+          <option value="no_vencidas"${estadoFiltro === "no_vencidas" ? " selected" : ""}>No vencidas</option>
+        </select>
+        ${estadoFiltro ? `<button type="button" id="cc-btn-estado-reset" class="btn-link">Quitar filtro</button>` : ""}
       </div>
 
       <div class="section-title">Total pendiente: ${Utils.formatMonto(data.total_pendiente)}</div>
