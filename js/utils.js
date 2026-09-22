@@ -3,6 +3,7 @@ const Utils = (() => {
   const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
                  "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const MESES_ABREV = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const DIAS_ABREV = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
   function todayISO() {
     const now = new Date();
@@ -28,6 +29,14 @@ const Utils = (() => {
     const date = new Date(y, m - 1, d);
     const dia = DIAS[date.getDay()];
     return `${dia.charAt(0).toUpperCase()}${dia.slice(1)} ${d} de ${MESES_ABREV[m - 1]}`;
+  }
+
+  function fechaCortaConDia(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    const dd = String(d).padStart(2, "0");
+    const mm = String(m).padStart(2, "0");
+    return `${DIAS_ABREV[date.getDay()]} ${dd}/${mm}`;
   }
 
   function rangoFechas(checkin, checkout) {
@@ -103,7 +112,7 @@ const Utils = (() => {
   }
 
   return {
-    todayISO, addDays, fechaLarga, fechaCorta, fechaAbrev, rangoFechas,
+    todayISO, addDays, fechaLarga, fechaCorta, fechaAbrev, fechaCortaConDia, rangoFechas,
     estadoReservaSuite, badgeClaseReserva,
     badgeClaseLimpieza, claseCardLimpieza,
     escapeHtml, formatMonto, tipoUnidadLabel
