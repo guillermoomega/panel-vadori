@@ -38,13 +38,19 @@ const ViewCaja = (() => {
   }
 
   function badgeDiferenciaTotal(r) {
-    if (r.diferencia_total === null || r.diferencia_total === undefined) {
+    // Diferencia_total viene de control_caja (fuente vs. usado de efectivo+tarjeta) y no sabe
+    // nada de transferencias MP, que llegan por fuera de esos dos medios. Si hay transferencias
+    // imputadas en este turno, se muestra la diferencia ya ajustada por ese cobro.
+    const tieneAjuste = !!r.transferencias_mp_total;
+    const diff = tieneAjuste ? r.diferencia_total_ajustada : r.diferencia_total;
+    if (diff === null || diff === undefined) {
       return `<span class="badge badge-neutral">Diferencia no detectada</span>`;
     }
-    if (Math.abs(r.diferencia_total) < 1) {
-      return `<span class="badge badge-ok">Caja cuadra</span>`;
+    const sufijo = tieneAjuste ? " (con transferencias MP imputadas)" : "";
+    if (Math.abs(diff) < 1) {
+      return `<span class="badge badge-ok">Caja cuadra${sufijo}</span>`;
     }
-    return `<span class="badge badge-warn">Diferencia caja ${Utils.formatMonto(r.diferencia_total)}</span>`;
+    return `<span class="badge badge-warn">Diferencia caja ${Utils.formatMonto(diff)}${sufijo}</span>`;
   }
 
   function badgeEgresosComprobantes(r) {
@@ -195,7 +201,8 @@ const ViewCaja = (() => {
           ${filaMedioPago("Efectivo", r.total_fuente_efectivo, r.total_usado_efectivo, r.diferencia_efectivo)}
           ${filaDepositoEfectivo(r)}
           ${filaMedioPago("Tarjeta", r.total_fuente_tarjeta, r.total_usado_tarjeta, r.diferencia_tarjeta)}
-          <div class="card-row"><div class="card-sub">Total</div><div>Dif ${val(r.diferencia_total)}</div></div>
+          ${r.transferencias_mp_total ? filaMedioPago("Transferencias MP", null, r.transferencias_mp_total, r.transferencias_mp_total) : ""}
+          <div class="card-row"><div class="card-sub">Total</div><div>Dif ${val(r.transferencias_mp_total ? r.diferencia_total_ajustada : r.diferencia_total)}</div></div>
 
           ${terminalHtml(r)}
 
