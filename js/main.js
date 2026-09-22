@@ -15,6 +15,7 @@
     horas:              { area: "administracion", section: document.getElementById("view-horas"),            render: ViewHoras.render,           loaded: false },
     resumen:            { area: "administracion", section: document.getElementById("view-resumen"),          render: ViewResumenSemanal.render,  loaded: false },
     "cuenta-corriente": { area: "administracion", section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false },
+    mpago:              { area: "administracion", section: document.getElementById("view-mpago"),            render: ViewMpago.render,           loaded: false },
     proveedores:        { area: "administracion", section: document.getElementById("view-proveedores"),      render: null,                       loaded: true },
     mas:                { area: "mas",            section: document.getElementById("view-mas"),              render: null,                       loaded: true }
   };

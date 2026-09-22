@@ -96,6 +96,12 @@ const ViewCaja = (() => {
       </div>`;
   }
 
+  function badgeTransferenciasMp(r) {
+    if (!r.transferencias_mp_total) return "";
+    const n = (r.transferencias_mp || []).length;
+    return `<span class="badge badge-ok">${n} transferencia${n === 1 ? "" : "s"} MercadoPago imputada${n === 1 ? "" : "s"}</span>`;
+  }
+
   function badgeTerminalVsUsado(r) {
     if (r.terminal_total === null || r.terminal_total === undefined) return "";
     if (r.diferencia_terminal_vs_usado === null || r.diferencia_terminal_vs_usado === undefined) {
@@ -141,6 +147,18 @@ const ViewCaja = (() => {
       ${filas}`;
   }
 
+  function transferenciasMPDetalleHtml(r) {
+    if (!r.transferencias_mp || !r.transferencias_mp.length) return "";
+    const filas = r.transferencias_mp.map(t => `
+      <div class="card-row">
+        <div class="card-sub">${t.hora ? Utils.escapeHtml(t.hora.slice(0, 5)) : "—"}${t.descripcion ? " · " + Utils.escapeHtml(t.descripcion) : ""}</div>
+        <div>${val(t.monto)}</div>
+      </div>`).join("");
+    return `
+      <div class="card-detail-label">Transferencias MercadoPago imputadas</div>
+      ${filas}`;
+  }
+
   function cardReporte(r) {
     const tituloFecha = r.fecha_apertura
       ? Utils.fechaLarga(r.fecha_apertura)
@@ -159,6 +177,7 @@ const ViewCaja = (() => {
           ${badgeDiferenciaTotal(r)}
           ${badgeEgresosComprobantes(r)}
           ${badgeDepositosEfectivo(r)}
+          ${badgeTransferenciasMp(r)}
           ${badgeTerminalVsUsado(r)}
         </div>
         <div class="card-detail">
@@ -168,6 +187,7 @@ const ViewCaja = (() => {
 
           <div class="card-detail-label">Totales</div>
           <div class="card-row"><div class="card-sub">Ingresos</div><div>${val(r.ingresos_total)}</div></div>
+          ${r.transferencias_mp_total ? `<div class="card-row"><div class="card-sub">Transferencias MercadoPago</div><div>${val(r.transferencias_mp_total)}</div></div>` : ""}
           <div class="card-row"><div class="card-sub">Egreso</div><div>${val(r.egreso_total)}</div></div>
           <div class="card-row"><div class="card-sub">Resumen</div><div>${val(r.resumen)}</div></div>
 
@@ -182,6 +202,8 @@ const ViewCaja = (() => {
           ${comprobantesDetalleHtml(r)}
 
           ${depositosDetalleHtml(r)}
+
+          ${transferenciasMPDetalleHtml(r)}
         </div>
       </div>`;
   }

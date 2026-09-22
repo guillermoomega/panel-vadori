@@ -59,6 +59,9 @@ const Api = (() => {
     marcarPagadoCC: (id, origen_pago) => post("/cuenta-corriente/pagar", { id, origen_pago }),
     fichajes: (rango) => get("/fichajes", rango || {}),
     editarFichaje: (id, fecha, hora) => post("/fichajes/editar", { id, fecha, hora }),
-    crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora })
+    crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora }),
+    mpago: (rango) => get("/mpago", rango || {}),
+    imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id }) =>
+      post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id })
   };
 })();

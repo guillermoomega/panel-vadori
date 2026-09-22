@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icons/icon.svg" />
 <meta name="theme-color" content="#0f766e" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
-<link rel="stylesheet" href="css/styles.css?v=20260919" />
+<link rel="stylesheet" href="css/styles.css?v=20260922" />
 </head>
 <body>
 
@@ -30,6 +30,7 @@
     <button type="button" class="rango-tab area-tab-btn" data-seccion="horas">Horas</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="resumen">Resumen</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="cuenta-corriente">Cta. corriente</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="mpago">M.Pago</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="proveedores">Proveedores</button>
   </nav>
 
@@ -75,6 +76,11 @@
     <div id="cuenta-corriente-content"></div>
   </section>
 
+  <section id="view-mpago" class="view" hidden>
+    <div id="mpago-estado" class="estado-msg"></div>
+    <div id="mpago-content"></div>
+  </section>
+
   <section id="view-proveedores" class="view" hidden>
     <div class="empty-msg">Próximamente.</div>
   </section>
@@ -103,18 +109,19 @@
   </button>
 </nav>
 
-<script src="js/config.js?v=20260919"></script>
-<script src="js/api.js?v=20260919"></script>
-<script src="js/utils.js?v=20260919"></script>
+<script src="js/config.js?v=20260922"></script>
+<script src="js/api.js?v=20260922"></script>
+<script src="js/utils.js?v=20260922"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="js/views/hoy.js?v=20260919"></script>
-<script src="js/views/limpieza.js?v=20260919"></script>
-<script src="js/views/calendario.js?v=20260919"></script>
-<script src="js/views/horas.js?v=20260919"></script>
-<script src="js/views/checkins.js?v=20260919"></script>
-<script src="js/views/caja.js?v=20260919"></script>
-<script src="js/views/resumen_semanal.js?v=20260919"></script>
-<script src="js/views/cuenta_corriente.js?v=20260919"></script>
-<script src="js/main.js?v=20260919"></script>
+<script src="js/views/hoy.js?v=20260922"></script>
+<script src="js/views/limpieza.js?v=20260922"></script>
+<script src="js/views/calendario.js?v=20260922"></script>
+<script src="js/views/horas.js?v=20260922"></script>
+<script src="js/views/checkins.js?v=20260922"></script>
+<script src="js/views/caja.js?v=20260922"></script>
+<script src="js/views/resumen_semanal.js?v=20260922"></script>
+<script src="js/views/cuenta_corriente.js?v=20260922"></script>
+<script src="js/views/mpago.js?v=20260922"></script>
+<script src="js/main.js?v=20260922"></script>
 </body>
 </html>
