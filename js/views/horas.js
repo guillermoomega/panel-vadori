@@ -14,6 +14,7 @@ const ViewHoras = (() => {
   let guardandoFichaje = false;
 
   let excluidos = new Set(); // nombres excluidos del pago; se reinicia en cada carga de datos
+  let filtroArea = ""; // "" = todas; se reinicia en cada carga de datos
 
   function formatFechaHora(iso) {
     const d = new Date(iso);
@@ -98,6 +99,12 @@ const ViewHoras = (() => {
       }
     });
     elContent().addEventListener("change", (ev) => {
+      const areaSelect = ev.target.closest("#horas-filtro-area");
+      if (areaSelect) {
+        filtroArea = areaSelect.value;
+        rerenderContent();
+        return;
+      }
       const chk = ev.target.closest(".chk-incluir-persona");
       if (!chk) return;
       const nombre = chk.dataset.nombre;
@@ -191,8 +198,38 @@ const ViewHoras = (() => {
     }
   }
 
+  function personasVisibles(data) {
+    return filtroArea ? data.personas.filter(p => p.area === filtroArea) : data.personas;
+  }
+
+  function listaAreas(data) {
+    return [...new Set(data.personas.map(p => p.area).filter(Boolean))].sort();
+  }
+
+  function filtroAreaHtml(data) {
+    const areas = listaAreas(data);
+    if (!areas.length) return "";
+    const opciones = areas.map(a => `<option value="${Utils.escapeHtml(a)}" ${filtroArea === a ? "selected" : ""}>${Utils.escapeHtml(a)}</option>`).join("");
+    return `
+      <div class="horas-periodo">
+        <label for="horas-filtro-area">Área:</label>
+        <select id="horas-filtro-area" class="input-fecha">
+          <option value="" ${filtroArea === "" ? "selected" : ""}>Todas</option>
+          ${opciones}
+        </select>
+      </div>`;
+  }
+
   function totalAjustado(data) {
-    return data.personas.reduce((acc, p) => excluidos.has(p.nombre) ? acc : acc + (p.monto || 0), 0);
+    return personasVisibles(data).reduce((acc, p) => excluidos.has(p.nombre) ? acc : acc + (p.monto || 0), 0);
+  }
+
+  // Personas que quedan fuera del filtro de área también quedan fuera del pago:
+  // el backend no conoce el filtro, así que se suman a la lista de excluidos que se le envía.
+  function exclusionesEfectivas(data) {
+    if (!filtroArea) return [...excluidos];
+    const fueraDeArea = data.personas.filter(p => p.area !== filtroArea).map(p => p.nombre);
+    return [...new Set([...excluidos, ...fueraDeArea])];
   }
 
   async function pagar() {
@@ -201,7 +238,9 @@ const ViewHoras = (() => {
     const desdeTxt = formatFechaHora(ultimoData.desde);
     const hastaTxt = formatFechaHora(ultimoData.hasta);
     const excluidosTxt = excluidos.size ? `\n\nNo incluye a: ${[...excluidos].join(", ")}.` : "";
-    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?${excluidosTxt}\n\nSe va a generar un comprobante de gasto (sueldos, Caja GV) que después se cruza con lo egresado en el turno.`);
+    const areaTxt = filtroArea ? `\nÁrea: ${filtroArea}.` : "";
+    const proveedorTxt = filtroArea ? `Sueldos (${filtroArea})` : "sueldos";
+    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?${areaTxt}${excluidosTxt}\n\nSe va a generar un comprobante de gasto (${proveedorTxt}, Caja GV) que después se cruza con lo egresado en el turno.`);
     if (!ok) return;
 
     pagando = true;
@@ -211,7 +250,7 @@ const ViewHoras = (() => {
     elEstado().classList.remove("error");
 
     try {
-      const res = await Api.pagarHoras(rangoOverride, [...excluidos]);
+      const res = await Api.pagarHoras(rangoOverride, exclusionesEfectivas(ultimoData), filtroArea || null);
       if (!res.ok) throw new Error(res.error || "No se pudo registrar el pago.");
       elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`;
       if (btn) { btn.textContent = "✓ Pagado"; }
@@ -236,7 +275,7 @@ const ViewHoras = (() => {
         </label>
         <div class="card-main">
           <div class="card-title">${Utils.escapeHtml(p.nombre)}</div>
-          <div class="card-sub">${p.horas_texto}</div>
+          <div class="card-sub">${p.horas_texto}${p.area ? ` · ${Utils.escapeHtml(p.area)}` : ""}</div>
         </div>
         <div class="card-meta">${montoTxt}</div>
       </div>`;
@@ -322,13 +361,14 @@ const ViewHoras = (() => {
     const desdeStr = data.desde.slice(0, 10);
     const hastaStr = data.hasta.slice(0, 10);
 
-    const personasHtml = data.personas.length
-      ? data.personas.map(cardPersona).join("")
-      : `<div class="empty-msg">Sin fichajes registrados en este período.</div>`;
+    const visibles = personasVisibles(data);
+    const personasHtml = visibles.length
+      ? visibles.map(cardPersona).join("")
+      : `<div class="empty-msg">${filtroArea ? "Sin personas en esta área para el período." : "Sin fichajes registrados en este período."}</div>`;
 
     const totalMontoAjustado = totalAjustado(data);
-    const totalTxt = data.personas.length ? Utils.formatMonto(totalMontoAjustado) : "—";
-    const puedePagar = data.personas.length > 0 && totalMontoAjustado > 0;
+    const totalTxt = visibles.length ? Utils.formatMonto(totalMontoAjustado) : "—";
+    const puedePagar = visibles.length > 0 && totalMontoAjustado > 0;
 
     const sinResolverHtml = data.sin_resolver.length
       ? `
@@ -351,6 +391,7 @@ const ViewHoras = (() => {
         ${rangoOverride ? `<button type="button" id="horas-btn-reset" class="btn-link">Por defecto</button>` : ""}
       </div>
 
+      ${filtroAreaHtml(data)}
       <div class="section-title">Horas por persona</div>
       ${personasHtml}
       <div class="card card-row">
@@ -376,6 +417,7 @@ const ViewHoras = (() => {
       const data = await Api.horas(rangoOverride);
       elEstado().textContent = "";
       excluidos = new Set();
+      filtroArea = "";
       renderContent(data);
     } catch (err) {
       elEstado().textContent = err.message;
