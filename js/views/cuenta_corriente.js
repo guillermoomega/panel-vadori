@@ -4,7 +4,7 @@ const ViewCuentaCorriente = (() => {
 
   let rangoOverride = null; // { desde, hasta } en YYYY-MM-DD, o null = rango por defecto del backend
   let proveedorFiltro = null; // nombre exacto del proveedor, o null = todos
-  let estadoFiltro = null; // "vencidas" | "no_vencidas" | null = todas
+  let estadoFiltro = "vencidas"; // "vencidas" | "no_vencidas" | null = todas — arranca en "vencidas" por defecto
   let selectedIds = new Set();
   let ultimaData = null;
   let listenersAttached = false;
