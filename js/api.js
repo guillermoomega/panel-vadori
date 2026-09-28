@@ -62,6 +62,7 @@ const Api = (() => {
     crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora }),
     mpago: (rango) => get("/mpago", rango || {}),
     imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id }) =>
-      post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id })
+      post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id }),
+    crearReserva: (datos) => post("/reserva/crear", datos)
   };
 })();

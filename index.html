@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icons/icon.svg" />
 <meta name="theme-color" content="#0f766e" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
-<link rel="stylesheet" href="css/styles.css?v=20260922d" />
+<link rel="stylesheet" href="css/styles.css?v=20260928a" />
 </head>
 <body>
 
@@ -23,6 +23,7 @@
     <button type="button" class="rango-tab area-tab-btn" data-seccion="checkins">Check-ins</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="calendario">Calendario</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="estado">Estado</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="nueva-reserva">Nueva reserva</button>
   </nav>
 
   <nav class="rango-tabs area-tabs" data-area="administracion" hidden>
@@ -54,6 +55,11 @@
   <section id="view-limpieza" class="view" hidden>
     <div id="limpieza-estado" class="estado-msg"></div>
     <div id="limpieza-grid" class="unidades-grid"></div>
+  </section>
+
+  <section id="view-nueva-reserva" class="view" hidden>
+    <div id="nueva-reserva-estado" class="estado-msg"></div>
+    <div id="nueva-reserva-content"></div>
   </section>
 
   <section id="view-caja" class="view" hidden>
@@ -109,19 +115,20 @@
   </button>
 </nav>
 
-<script src="js/config.js?v=20260922d"></script>
-<script src="js/api.js?v=20260922d"></script>
-<script src="js/utils.js?v=20260922d"></script>
+<script src="js/config.js?v=20260928a"></script>
+<script src="js/api.js?v=20260928a"></script>
+<script src="js/utils.js?v=20260928a"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="js/views/hoy.js?v=20260922d"></script>
-<script src="js/views/limpieza.js?v=20260922d"></script>
-<script src="js/views/calendario.js?v=20260922d"></script>
-<script src="js/views/horas.js?v=20260922d"></script>
-<script src="js/views/checkins.js?v=20260922d"></script>
-<script src="js/views/caja.js?v=20260922d"></script>
-<script src="js/views/resumen_semanal.js?v=20260922d"></script>
-<script src="js/views/cuenta_corriente.js?v=20260922d"></script>
-<script src="js/views/mpago.js?v=20260922d"></script>
-<script src="js/main.js?v=20260922d"></script>
+<script src="js/views/hoy.js?v=20260928a"></script>
+<script src="js/views/limpieza.js?v=20260928a"></script>
+<script src="js/views/calendario.js?v=20260928a"></script>
+<script src="js/views/horas.js?v=20260928a"></script>
+<script src="js/views/checkins.js?v=20260928a"></script>
+<script src="js/views/caja.js?v=20260928a"></script>
+<script src="js/views/resumen_semanal.js?v=20260928a"></script>
+<script src="js/views/cuenta_corriente.js?v=20260928a"></script>
+<script src="js/views/mpago.js?v=20260928a"></script>
+<script src="js/views/reserva_crear.js?v=20260928a"></script>
+<script src="js/main.js?v=20260928a"></script>
 </body>
 </html>
