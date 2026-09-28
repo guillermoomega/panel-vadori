@@ -4,6 +4,7 @@ const ViewReservaCrear = (() => {
 
   let listenersAttached = false;
   let unidadesDisponibles = [];
+  let paquetesDisponibles = [];
 
   function attachListeners() {
     if (listenersAttached) return;
@@ -17,7 +18,10 @@ const ViewReservaCrear = (() => {
     });
 
     elContent().addEventListener("change", (ev) => {
-      if (ev.target.id === "reserva-tipo-unidad") actualizarOpcionesUnidad();
+      if (ev.target.id === "reserva-tipo-unidad") {
+        actualizarOpcionesUnidad();
+        actualizarOpcionesPaquete();
+      }
     });
   }
 
@@ -31,6 +35,22 @@ const ViewReservaCrear = (() => {
     unidadSel.innerHTML = `<option value="">Sin asignar (elegir después)</option>` +
       opciones.map(u => `<option value="${Utils.escapeHtml(u.id)}">${Utils.escapeHtml(u.nombre)}</option>`).join("");
     if (opciones.some(u => u.id === valorPrevio)) unidadSel.value = valorPrevio;
+  }
+
+  function actualizarOpcionesPaquete() {
+    const tipoSel = document.getElementById("reserva-tipo-unidad");
+    const paqueteSel = document.getElementById("reserva-paquete");
+    if (!tipoSel || !paqueteSel) return;
+    const tipo = tipoSel.value;
+    const valorPrevio = paqueteSel.value;
+    const opciones = paquetesDisponibles.map(p => {
+      const precio = tipo === "cuarto" ? p.precio_cuarto : p.precio_suite;
+      const etiqueta = precio ? `${p.nombre} — ${Utils.formatMonto(precio)}` : p.nombre;
+      return { nombre: p.nombre, etiqueta };
+    });
+    paqueteSel.innerHTML = `<option value="">Sin paquete</option>` +
+      opciones.map(o => `<option value="${Utils.escapeHtml(o.nombre)}">${Utils.escapeHtml(o.etiqueta)}</option>`).join("");
+    if (opciones.some(o => o.nombre === valorPrevio)) paqueteSel.value = valorPrevio;
   }
 
   async function handleSubmit(form) {
@@ -161,7 +181,9 @@ const ViewReservaCrear = (() => {
           </div>
           <div class="form-field">
             <label for="reserva-paquete">Paquete</label>
-            <input type="text" id="reserva-paquete" placeholder="Ej: Noche simple">
+            <select id="reserva-paquete">
+              <option value="">Sin paquete</option>
+            </select>
           </div>
         </div>
 
@@ -190,11 +212,13 @@ const ViewReservaCrear = (() => {
     elEstado().textContent = "Cargando…";
     elEstado().classList.remove("error");
     try {
-      const limpieza = await Api.limpieza();
+      const [limpieza, paquetes] = await Promise.all([Api.limpieza(), Api.paquetes()]);
       unidadesDisponibles = limpieza.unidades || [];
+      paquetesDisponibles = paquetes.paquetes || [];
       elEstado().textContent = "";
       elContent().innerHTML = formHtml();
       actualizarOpcionesUnidad();
+      actualizarOpcionesPaquete();
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
