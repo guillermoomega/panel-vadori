@@ -64,6 +64,8 @@ const Api = (() => {
     imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id }) =>
       post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id }),
     crearReserva: (datos) => post("/reserva/crear", datos),
-    paquetes: () => get("/paquetes")
+    paquetes: () => get("/paquetes"),
+    buscarReservas: (q) => get("/reserva/buscar", { q }),
+    editarReserva: (datos) => post("/reserva/editar", datos)
   };
 })();

@@ -681,3 +681,75 @@ body {
   cursor: pointer;
 }
 .btn-crear-reserva:disabled { opacity: 0.6; cursor: default; }
+
+.reserva-buscar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.reserva-buscar-fila {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.reserva-buscar-fila .form-field { flex: 1; }
+
+.btn-secundario {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-secundario:disabled { opacity: 0.6; cursor: default; }
+
+.reserva-buscar-resultados {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reserva-buscar-item {
+  text-align: left;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.reserva-buscar-item:hover { border-color: var(--accent); }
+
+.reserva-buscar-msg {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+.reserva-buscar-msg.error { color: var(--danger, #d33); }
+
+.reserva-edicion-banner {
+  background: var(--warn, #b58900);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.reserva-edicion-banner[hidden] { display: none; }
