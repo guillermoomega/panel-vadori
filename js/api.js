@@ -40,7 +40,11 @@ const Api = (() => {
       } catch (_) { /* respuesta sin cuerpo JSON */ }
       throw new Error(mensaje);
     }
-    return res.json();
+    try {
+      return await res.json();
+    } catch (_) {
+      throw new Error("El servidor no devolvió una respuesta válida. Verificá si el cambio se guardó antes de reintentar.");
+    }
   }
 
   return {

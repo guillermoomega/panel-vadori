@@ -316,7 +316,7 @@ const ViewReservaCrear = (() => {
             <label for="reserva-estado">Estado *</label>
             <select id="reserva-estado" required>
               <option value="Pendiente">Pendiente</option>
-              <option value="Confirmada">Confirmada</option>
+              <option value="Confirmada" selected>Confirmada</option>
               <option value="Cancelada">Cancelada</option>
             </select>
           </div>
