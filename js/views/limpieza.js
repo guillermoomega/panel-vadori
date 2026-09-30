@@ -15,7 +15,7 @@ const ViewLimpieza = (() => {
       <div class="unidad-card ${Utils.claseCardLimpieza(u.estado)}">
         <div>
           <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "\u2014")}</div>
-          <div class="unidad-tipo">${Utils.escapeHtml(u.tipo || "")}</div>
+          <div class="unidad-tipo">${Utils.escapeHtml(Utils.tipoUnidadLabel(u.tipo) || "")}</div>
         </div>
         <span class="badge ${Utils.badgeClaseLimpieza(u.estado)}">${Utils.escapeHtml(textoEstado(u))}</span>
         <div class="card-estado">

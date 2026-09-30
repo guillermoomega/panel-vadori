@@ -301,8 +301,8 @@ const ViewHoy = (() => {
 
       elEstado().textContent = "";
       elContent().innerHTML =
-        seccion("Check-ins de hoy", data.checkins, r => cardReserva(r, unidades), "Sin check-ins hoy.") +
-        seccion("Check-outs de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin check-outs hoy.") +
+        seccion("Ingresos de hoy", data.checkins, r => cardReserva(r, unidades), "Sin ingresos hoy.") +
+        seccion("Salidas de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin salidas hoy.") +
         seccion(tituloMesas("Reservas de hoy", turnosHoy), turnosHoy, cardTurnoHoy, "Sin reservas de mesa hoy.") +
         seccion(tituloMesas("Reservas de mañana", turnosManana), turnosManana, cardTurno, "Sin reservas de mesa mañana.") +
         seccion(tituloMesas("Reservas de pasado mañana", turnosPasado), turnosPasado, cardTurno, "Sin reservas de mesa pasado mañana.");

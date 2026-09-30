@@ -19,9 +19,9 @@ const Api = (() => {
     return res.json();
   }
 
-  async function post(path, body = {}) {
+  async function write(method, path, body = {}) {
     const res = await fetch(window.PANEL_CONFIG.apiBase + path, {
-      method: "POST",
+      method,
       headers: {
         "X-Panel-Key": window.PANEL_CONFIG.panelKey,
         "Content-Type": "application/json"
@@ -47,6 +47,10 @@ const Api = (() => {
     }
   }
 
+  async function post(path, body = {}) { return write("POST", path, body); }
+  async function patch(path, body = {}) { return write("PATCH", path, body); }
+  async function del(path, body = {}) { return write("DELETE", path, body); }
+
   return {
     ocupacion: (desde, hasta) => get("/ocupacion", { desde, hasta }),
     hoy: () => get("/hoy"),
@@ -70,6 +74,10 @@ const Api = (() => {
     crearReserva: (datos) => post("/reserva/crear", datos),
     paquetes: () => get("/paquetes"),
     buscarReservas: (q) => get("/reserva/buscar", { q }),
-    editarReserva: (datos) => post("/reserva/editar", datos)
+    editarReserva: (datos) => post("/reserva/editar", datos),
+    configListar: (tabla) => get(`/config/${tabla}`),
+    configCrear: (tabla, datos) => post(`/config/${tabla}`, datos),
+    configEditar: (tabla, datos) => patch(`/config/${tabla}`, datos),
+    configBorrar: (tabla, id) => del(`/config/${tabla}`, { id })
   };
 })();

@@ -108,7 +108,7 @@ const ViewReservaCrear = (() => {
       }
       cont.innerHTML = resultadosBusqueda.map(r => `
         <button type="button" class="reserva-buscar-item" data-id="${Utils.escapeHtml(r.id)}">
-          <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${r.tipo_unidad === "suite" ? "Suite" : "Cuarto"} ·
+          <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad) || "—")} ·
           ${Utils.rangoFechas(r.checkin, r.checkout)} · ${Utils.escapeHtml(r.estado)}
         </button>`).join("");
     } catch (err) {
@@ -126,8 +126,10 @@ const ViewReservaCrear = (() => {
     unidadIdAnterior = reserva.unidad_id || null;
     paqueteActual = reserva.paquete || null;
 
+    const tipoNorm = reserva.tipo_unidad && reserva.tipo_unidad.trim().toLowerCase().includes("cuarto") ? "cuarto" : "suite";
+
     form.querySelector("#reserva-nombre").value = reserva.nombre || "";
-    form.querySelector("#reserva-tipo-unidad").value = reserva.tipo_unidad || "suite";
+    form.querySelector("#reserva-tipo-unidad").value = tipoNorm;
     form.querySelector("#reserva-checkin").value = reserva.checkin || "";
     form.querySelector("#reserva-checkout").value = reserva.checkout || "";
     form.querySelector("#reserva-adultos").value = reserva.adultos || 2;
@@ -192,17 +194,17 @@ const ViewReservaCrear = (() => {
     const unidad_id = unidadSel.value;
 
     if (!nombre || !checkin || !checkout || !adultos || adultos < 1) {
-      alert("Completá nombre, check-in, check-out y adultos.");
+      alert("Completá nombre, ingreso, salida y adultos.");
       return;
     }
     if (checkout <= checkin) {
-      alert("El check-out debe ser posterior al check-in.");
+      alert("La salida debe ser posterior al ingreso.");
       return;
     }
 
     const unidadTexto = unidad_id ? unidadSel.options[unidadSel.selectedIndex].textContent : "sin asignar";
     const resumen = `Huésped: ${nombre}\n` +
-      `Unidad: ${tipo_unidad === "suite" ? "Suite" : "Cuarto"} (${unidadTexto})\n` +
+      `Unidad: ${tipo_unidad === "suite" ? "Suite Premium" : "Suite Estándar"} (${unidadTexto})\n` +
       `Fechas: ${Utils.rangoFechas(checkin, checkout)}\n` +
       `Adultos: ${adultos}\n` +
       `Estado: ${estado}`;
@@ -284,8 +286,8 @@ const ViewReservaCrear = (() => {
           <div class="form-field">
             <label for="reserva-tipo-unidad">Tipo de unidad *</label>
             <select id="reserva-tipo-unidad" required>
-              <option value="suite">Suite</option>
-              <option value="cuarto">Cuarto</option>
+              <option value="suite">Suite Premium</option>
+              <option value="cuarto">Suite Estándar</option>
             </select>
           </div>
           <div class="form-field">
@@ -298,11 +300,11 @@ const ViewReservaCrear = (() => {
 
         <div class="form-row">
           <div class="form-field">
-            <label for="reserva-checkin">Check-in *</label>
+            <label for="reserva-checkin">Ingreso *</label>
             <input type="date" id="reserva-checkin" required>
           </div>
           <div class="form-field">
-            <label for="reserva-checkout">Check-out *</label>
+            <label for="reserva-checkout">Salida *</label>
             <input type="date" id="reserva-checkout" required>
           </div>
         </div>

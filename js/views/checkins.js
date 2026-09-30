@@ -195,7 +195,7 @@ const ViewCheckins = (() => {
         ? grupos.map(([fecha, items]) =>
             `<div class="section-title">${Utils.escapeHtml(Utils.fechaLarga(fecha))}</div>${items.map(r => cardCheckin(r, unidades)).join("")}`
           ).join("")
-        : `<div class="empty-msg">Sin check-ins en este período.</div>`;
+        : `<div class="empty-msg">Sin ingresos en este período.</div>`;
 
       elEstado().textContent = "";
       elContent().innerHTML = toolbarRango() + contenido;

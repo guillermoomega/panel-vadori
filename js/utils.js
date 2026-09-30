@@ -106,8 +106,8 @@ const Utils = (() => {
   function tipoUnidadLabel(tipo) {
     if (!tipo) return null;
     const t = tipo.trim().toLowerCase();
-    if (t === "cuarto") return "Cuarto";
-    if (t === "suite" || t === "suites") return "Suites";
+    if (t === "cuarto") return "Suite Estándar";
+    if (t === "suite" || t === "suites") return "Suite Premium";
     return tipo.trim();
   }
 

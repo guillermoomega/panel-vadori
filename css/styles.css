@@ -670,6 +670,31 @@ body {
   min-height: 60px;
 }
 
+.form-field-wide {
+  grid-column: 1 / -1;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.checkbox-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.checkbox-inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .btn-crear-reserva {
   background: var(--accent);
   color: var(--accent-contrast);
@@ -753,3 +778,45 @@ body {
 }
 
 .reserva-edicion-banner[hidden] { display: none; }
+
+/* --- Configuración de tarifas/paquetes --- */
+
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.config-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.config-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-subseccion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.config-subseccion .section-title { margin-top: 0; }
+
+.btn-peligro {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border: 1px solid var(--bad);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-peligro:disabled { opacity: 0.6; cursor: default; }
