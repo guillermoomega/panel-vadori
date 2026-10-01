@@ -226,6 +226,41 @@ body {
 }
 .btn-asignar:disabled { opacity: 0.6; cursor: default; }
 
+.card-nota {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.card-nota textarea {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 50px;
+}
+
+.btn-guardar-nota {
+  align-self: flex-end;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-guardar-nota:disabled { opacity: 0.6; cursor: default; }
+
 .card-pagar {
   display: flex;
   margin-top: 10px;

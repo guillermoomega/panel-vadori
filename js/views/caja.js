@@ -8,7 +8,7 @@ const ViewCaja = (() => {
   function attachListeners() {
     if (listenersAttached) return;
     listenersAttached = true;
-    elContent().addEventListener("click", (ev) => {
+    elContent().addEventListener("click", async (ev) => {
       const btnToggle = ev.target.closest("#caja-btn-rango");
       if (btnToggle) {
         const form = document.getElementById("caja-rango-form");
@@ -28,8 +28,33 @@ const ViewCaja = (() => {
       if (btnReset) {
         rangoOverride = null;
         render();
+        return;
+      }
+      const btnGuardarNota = ev.target.closest(".btn-guardar-nota");
+      if (btnGuardarNota) {
+        await handleGuardarNota(btnGuardarNota);
       }
     });
+  }
+
+  async function handleGuardarNota(btn) {
+    const id = btn.dataset.cajaId;
+    const textarea = btn.closest(".card-nota").querySelector(".input-nota");
+    const nota = textarea.value;
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    textarea.disabled = true;
+    btn.textContent = "Guardando…";
+    try {
+      const res = await Api.cajaNota(id, nota);
+      if (!res.ok) throw new Error(res.error || "No se pudo guardar la nota.");
+      await render();
+    } catch (err) {
+      btn.disabled = false;
+      textarea.disabled = false;
+      btn.textContent = textoOriginal;
+      alert(err.message);
+    }
   }
 
   // El ticket puede traer un campo ilegible; nunca inventamos un valor, mostramos "—".
@@ -165,6 +190,15 @@ const ViewCaja = (() => {
       ${filas}`;
   }
 
+  function notaHtml(r) {
+    return `
+      <div class="card-detail-label">Nota</div>
+      <div class="card-nota">
+        <textarea class="input-nota" data-caja-id="${Utils.escapeHtml(r.id)}" placeholder="Agregar una nota sobre este turno…">${Utils.escapeHtml(r.nota || "")}</textarea>
+        <button type="button" class="btn-guardar-nota" data-caja-id="${Utils.escapeHtml(r.id)}">Guardar nota</button>
+      </div>`;
+  }
+
   function cardReporte(r) {
     const tituloFecha = r.fecha_apertura
       ? Utils.fechaLarga(r.fecha_apertura)
@@ -211,6 +245,8 @@ const ViewCaja = (() => {
           ${depositosDetalleHtml(r)}
 
           ${transferenciasMPDetalleHtml(r)}
+
+          ${notaHtml(r)}
         </div>
       </div>`;
   }
