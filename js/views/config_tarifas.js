@@ -12,7 +12,6 @@ const ViewConfigTarifas = (() => {
         { name: "Pack", label: "Paquete", type: "text", required: true, placeholder: "Nombre del paquete" },
         { name: "tipo", label: "Tipo", type: "select", required: true, opciones: ["Voucher", "Alojamiento", "Adicional", "Menu"] },
         { name: "Estado", label: "Estado", type: "select", required: true, opciones: ["Activo", "Inactivo"], default: "Activo" },
-        { name: "Temporada", label: "Temporada", type: "select", opciones: ["Baja", "Media", "Alta", "Especial"] },
         { name: "Suite", label: "Precio Suite Premium", type: "number", step: "0.01" },
         { name: "Cuarto", label: "Precio Suite Estándar", type: "number", step: "0.01" },
         { name: "Restaurante", label: "Precio Restaurante", type: "number", step: "0.01" },
@@ -221,7 +220,7 @@ const ViewConfigTarifas = (() => {
     if (item.Cuarto !== undefined) precios.push(`Suite Estándar ${Utils.formatMonto(item.Cuarto)}`);
     return {
       titulo: `${item.Pack || "(sin nombre)"}${item.tipo ? " · " + item.tipo : ""}`,
-      sub: `${item.Estado || "-"}${precios.length ? " · " + precios.join(" · ") : ""}${item.Temporada ? " · Temp. " + item.Temporada : ""}`
+      sub: `${item.Estado || "-"}${precios.length ? " · " + precios.join(" · ") : ""}`
     };
   }
 
