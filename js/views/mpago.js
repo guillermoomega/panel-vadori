@@ -67,13 +67,11 @@ const ViewMpago = (() => {
     const wrapper = btn.closest(".card-marcar-pagado");
     const select = wrapper.querySelector(".mp-select-turno");
     const reportes_caja_id = select.value;
-    if (!reportes_caja_id) {
-      select.focus();
-      return;
-    }
-    const turno = (ultimaData.turnos_disponibles || []).find(x => x.id === reportes_caja_id);
-    const turnoTxt = turno ? `${Utils.fechaCortaConDia(turno.fecha_apertura)} ${turno.hora_apertura || ""}` : "el turno seleccionado";
-    if (!confirm(`¿Imputar ${Utils.formatMonto(t.monto)} (${Utils.fechaCortaConDia(t.fecha)}) como cobro en la caja de ${turnoTxt}?`)) {
+    const turno = reportes_caja_id ? (ultimaData.turnos_disponibles || []).find(x => x.id === reportes_caja_id) : null;
+    const confirmMsg = reportes_caja_id
+      ? `¿Imputar ${Utils.formatMonto(t.monto)} (${Utils.fechaCortaConDia(t.fecha)}) como cobro en la caja de ${turno ? `${Utils.fechaCortaConDia(turno.fecha_apertura)} ${turno.hora_apertura || ""}` : "el turno seleccionado"}?`
+      : `¿Imputar ${Utils.formatMonto(t.monto)} (${Utils.fechaCortaConDia(t.fecha)}) como cobro? Todavía no hay un turno de caja que cubra ese horario — se va a vincular solo cuando se cargue el cierre de ese turno.`;
+    if (!confirm(confirmMsg)) {
       return;
     }
     const textoOriginal = btn.textContent;
@@ -127,6 +125,9 @@ const ViewMpago = (() => {
     const sub = subPartes.map(Utils.escapeHtml).join(" · ");
 
     if (t.imputado) {
+      const badge = t.reportes_caja_id
+        ? `<span class="badge badge-ok">Imputada</span>`
+        : `<span class="badge badge-warn">Imputada · pendiente de turno</span>`;
       return `
         <div class="card">
           <div class="card-row">
@@ -136,7 +137,7 @@ const ViewMpago = (() => {
             </div>
             <div class="card-meta">
               <span class="card-hora">${Utils.formatMonto(t.monto)}</span>
-              <span class="badge badge-ok">Imputada</span>
+              ${badge}
             </div>
           </div>
         </div>`;
