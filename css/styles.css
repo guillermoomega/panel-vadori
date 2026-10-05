@@ -467,6 +467,8 @@ body {
 .badge-warn     { color: var(--warn); background: var(--warn-bg); }
 .badge-bad      { color: var(--bad);  background: var(--bad-bg); }
 .badge-neutral  { color: var(--neutral); background: var(--neutral-bg); }
+/* Badges de "diferencia" (montos que no cuadran) — rojo sobre blanco fijo, no sigue el tema claro/oscuro */
+.badge-diferencia { color: #b3261e; background: #ffffff; }
 
 /* --- Limpieza --- */
 

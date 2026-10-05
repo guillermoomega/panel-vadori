@@ -75,7 +75,7 @@ const ViewCaja = (() => {
     if (Math.abs(diff) < 1) {
       return `<span class="badge badge-ok">Caja cuadra${sufijo}</span>`;
     }
-    return `<span class="badge badge-warn">Diferencia caja ${Utils.formatMonto(diff)}${sufijo}</span>`;
+    return `<span class="badge badge-diferencia">Diferencia caja ${Utils.formatMonto(diff)}${sufijo}</span>`;
   }
 
   function badgeEgresosComprobantes(r) {
@@ -85,7 +85,7 @@ const ViewCaja = (() => {
     if (Math.abs(r.diferencia_egresos_vs_comprobantes) < 1) {
       return `<span class="badge badge-ok">Egresos coinciden con comprobantes</span>`;
     }
-    return `<span class="badge badge-warn">Egresos vs comprobantes: diferencia ${Utils.formatMonto(r.diferencia_egresos_vs_comprobantes)}</span>`;
+    return `<span class="badge badge-diferencia">Egresos vs comprobantes: diferencia ${Utils.formatMonto(r.diferencia_egresos_vs_comprobantes)}</span>`;
   }
 
   function filaAperturaCierre(label, fecha, hora, responsable) {
@@ -115,7 +115,7 @@ const ViewCaja = (() => {
     if (Math.abs(r.diferencia_deposito_vs_usado) < 1) {
       return `<span class="badge badge-ok">Depósito coincide con el efectivo contado</span>`;
     }
-    return `<span class="badge badge-warn">Depósito vs. efectivo contado: diferencia ${Utils.formatMonto(r.diferencia_deposito_vs_usado)}</span>`;
+    return `<span class="badge badge-diferencia">Depósito vs. efectivo contado: diferencia ${Utils.formatMonto(r.diferencia_deposito_vs_usado)}</span>`;
   }
 
   function filaDepositoEfectivo(r) {
@@ -133,6 +133,20 @@ const ViewCaja = (() => {
     return `<span class="badge badge-ok">${n} transferencia${n === 1 ? "" : "s"} MercadoPago imputada${n === 1 ? "" : "s"}</span>`;
   }
 
+  function badgeTransferenciaVsImputado(r) {
+    // El "Ingreso en transferencia" del ticket (terminal_transferencia) es la prueba externa de
+    // lo cobrado por MercadoPago/QR ese turno; se cruza contra lo que efectivamente se imputó
+    // desde la vista M.Pago (transferencias_mp_total). A diferencia de badgeTransferenciasMp
+    // (que sólo informa cuántas se imputaron), esto avisa cuando el ticket dice que entró
+    // transferencia pero todavía no se imputó nada — o cuando el monto no coincide.
+    if (r.terminal_transferencia === null || r.terminal_transferencia === undefined) return "";
+    if (r.diferencia_transferencia_mp_vs_terminal === null || r.diferencia_transferencia_mp_vs_terminal === undefined) return "";
+    if (Math.abs(r.diferencia_transferencia_mp_vs_terminal) < 1) {
+      return `<span class="badge badge-ok">Transferencia del ticket coincide con lo imputado</span>`;
+    }
+    return `<span class="badge badge-diferencia">Transferencia ticket vs. imputado: diferencia ${Utils.formatMonto(r.diferencia_transferencia_mp_vs_terminal)}</span>`;
+  }
+
   function badgeTerminalVsUsado(r) {
     if (r.terminal_total === null || r.terminal_total === undefined) return "";
     if (r.diferencia_terminal_vs_usado === null || r.diferencia_terminal_vs_usado === undefined) {
@@ -141,7 +155,7 @@ const ViewCaja = (() => {
     if (Math.abs(r.diferencia_terminal_vs_usado) < 1) {
       return `<span class="badge badge-ok">Cierre de lote coincide con la tarjeta contada</span>`;
     }
-    return `<span class="badge badge-warn">Cierre de lote vs. tarjeta contada: diferencia ${Utils.formatMonto(r.diferencia_terminal_vs_usado)}</span>`;
+    return `<span class="badge badge-diferencia">Cierre de lote vs. tarjeta contada: diferencia ${Utils.formatMonto(r.diferencia_terminal_vs_usado)}</span>`;
   }
 
   function terminalHtml(r) {
@@ -149,7 +163,7 @@ const ViewCaja = (() => {
     if (sinDatos) return "";
     return `
       <div class="card-detail-label">Cierre de lote (terminal)</div>
-      <div class="card-row"><div class="card-sub">Transferencia/QR</div><div>${val(r.terminal_transferencia)}</div></div>
+      <div class="card-row"><div class="card-sub">Transferencia/QR</div><div>${val(r.terminal_transferencia)} · Dif vs. imputado ${val(r.diferencia_transferencia_mp_vs_terminal)}</div></div>
       <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.terminal_tarjeta)}</div></div>
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)} · Dif vs. contado ${val(r.diferencia_terminal_vs_usado)}</div></div>`;
   }
@@ -218,6 +232,7 @@ const ViewCaja = (() => {
           ${badgeEgresosComprobantes(r)}
           ${badgeDepositosEfectivo(r)}
           ${badgeTransferenciasMp(r)}
+          ${badgeTransferenciaVsImputado(r)}
           ${badgeTerminalVsUsado(r)}
         </div>
         <div class="card-detail">
