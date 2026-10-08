@@ -203,19 +203,34 @@ const ViewHoy = (() => {
     return Array.from(porHora.values()).sort((a, b) => a.hora.localeCompare(b.hora));
   }
 
-  function cardTurno(t) {
-    const detalle = `<div class="card-detail" hidden>${t.reservas.map(r =>
-      `<div>${Utils.escapeHtml(r.nombre || "Sin nombre")} — ${r.personas ?? "?"} ad.${r.ninios ? ` · ${r.ninios} niños` : ""}</div>`
+  function agruparPorDia(mesas) {
+    const porFecha = new Map();
+    for (const m of mesas) {
+      if (m.estado === "Cancelada") continue;
+      const fecha = m.fecha;
+      if (!porFecha.has(fecha)) porFecha.set(fecha, { fecha, personas: 0, ninios: 0, mesas: [] });
+      const d = porFecha.get(fecha);
+      d.personas += Number(m.personas) || 0;
+      d.ninios += Number(m.ninios) || 0;
+      d.mesas.push(m);
+    }
+    return Array.from(porFecha.values()).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  }
+
+  function cardDia(d) {
+    const turnos = agruparPorTurno(d.mesas);
+    const detalle = `<div class="card-detail" hidden>${turnos.map(t =>
+      `<div>${Utils.escapeHtml(t.hora)} — ${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>`
     ).join("")}</div>`;
 
     return `
       <div class="card card-clickable">
         <div class="card-row">
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(t.hora)} <span class="card-info-icon">ⓘ</span></div>
+            <div class="card-title">${Utils.escapeHtml(Utils.fechaAbrev(d.fecha))} <span class="card-info-icon">ⓘ</span></div>
           </div>
           <div class="card-meta">
-            <div class="card-hora">${t.personas} pers.${t.ninios ? ` · ${t.ninios} niños` : ""}</div>
+            <div class="card-hora">${d.personas} pers.${d.ninios ? ` · ${d.ninios} niños` : ""}</div>
           </div>
         </div>
         ${detalle}
@@ -290,22 +305,19 @@ const ViewHoy = (() => {
     elContent().innerHTML = "";
     try {
       const manana = Utils.addDays(Utils.todayISO(), 1);
-      const pasado = Utils.addDays(Utils.todayISO(), 2);
-      const [data, limpieza, rango] = await Promise.all([Api.hoy(), Api.limpieza(), Api.ocupacion(manana, pasado)]);
+      const horizonte = Utils.addDays(manana, 29); // ventana de 30 días desde mañana
+      const [data, limpieza, rango] = await Promise.all([Api.hoy(), Api.limpieza(), Api.ocupacion(manana, horizonte)]);
       const unidades = limpieza.unidades || [];
-      const mesasManana = (rango.mesas || []).filter(m => m.fecha === manana);
-      const mesasPasado = (rango.mesas || []).filter(m => m.fecha === pasado);
+      const mesasFuturas = (rango.mesas || []).filter(m => m.fecha >= manana);
       const turnosHoy = mergeTurnosFijos(agruparPorTurno(data.mesas_hoy), data.turnos_fijos);
-      const turnosManana = agruparPorTurno(mesasManana);
-      const turnosPasado = agruparPorTurno(mesasPasado);
+      const diasFuturos = agruparPorDia(mesasFuturas);
 
       elEstado().textContent = "";
       elContent().innerHTML =
         seccion("Ingresos de hoy", data.checkins, r => cardReserva(r, unidades), "Sin ingresos hoy.") +
         seccion("Salidas de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin salidas hoy.") +
         seccion(tituloMesas("Reservas de hoy", turnosHoy), turnosHoy, cardTurnoHoy, "Sin reservas de mesa hoy.") +
-        seccion(tituloMesas("Reservas de mañana", turnosManana), turnosManana, cardTurno, "Sin reservas de mesa mañana.") +
-        seccion(tituloMesas("Reservas de pasado mañana", turnosPasado), turnosPasado, cardTurno, "Sin reservas de mesa pasado mañana.");
+        seccion(tituloMesas("Próximas reservas de mesa", diasFuturos), diasFuturos, cardDia, "Sin reservas de mesa próximas.");
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
