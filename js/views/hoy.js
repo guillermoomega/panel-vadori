@@ -309,13 +309,15 @@ const ViewHoy = (() => {
       const [data, limpieza, rango] = await Promise.all([Api.hoy(), Api.limpieza(), Api.ocupacion(manana, horizonte)]);
       const unidades = limpieza.unidades || [];
       const mesasFuturas = (rango.mesas || []).filter(m => m.fecha >= manana);
+      const checkinsActivos = (data.checkins || []).filter(r => r.estado !== "Cancelada");
+      const checkoutsActivos = (data.checkouts || []).filter(r => r.estado !== "Cancelada");
       const turnosHoy = mergeTurnosFijos(agruparPorTurno(data.mesas_hoy), data.turnos_fijos);
       const diasFuturos = agruparPorDia(mesasFuturas);
 
       elEstado().textContent = "";
       elContent().innerHTML =
-        seccion("Ingresos de hoy", data.checkins, r => cardReserva(r, unidades), "Sin ingresos hoy.") +
-        seccion("Salidas de hoy", data.checkouts, r => cardReserva(r, unidades), "Sin salidas hoy.") +
+        seccion("Ingresos de hoy", checkinsActivos, r => cardReserva(r, unidades), "Sin ingresos hoy.") +
+        seccion("Salidas de hoy", checkoutsActivos, r => cardReserva(r, unidades), "Sin salidas hoy.") +
         seccion(tituloMesas("Reservas de hoy", turnosHoy), turnosHoy, cardTurnoHoy, "Sin reservas de mesa hoy.") +
         seccion(tituloMesas("Próximas reservas de mesa", diasFuturos), diasFuturos, cardDia, "Sin reservas de mesa próximas.");
     } catch (err) {
