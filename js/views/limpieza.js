@@ -10,11 +10,17 @@ const ViewLimpieza = (() => {
     return u.estado || "\u2014";
   }
 
+  function iconoTermo(u) {
+    return u.estado === "ocupada"
+      ? `<span class="unidad-termo" title="Termo encendido">\u{1F975}</span>`
+      : `<span class="unidad-termo" title="Termo apagado">\u{1F976}</span>`;
+  }
+
   function cardUnidad(u) {
     return `
       <div class="unidad-card ${Utils.claseCardLimpieza(u.estado)}">
         <div>
-          <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "\u2014")}</div>
+          <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "\u2014")} ${iconoTermo(u)}</div>
           <div class="unidad-tipo">${Utils.escapeHtml(Utils.tipoUnidadLabel(u.tipo) || "")}</div>
         </div>
         <span class="badge ${Utils.badgeClaseLimpieza(u.estado)}">${Utils.escapeHtml(textoEstado(u))}</span>
