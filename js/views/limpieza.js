@@ -11,9 +11,16 @@ const ViewLimpieza = (() => {
   }
 
   function iconoTermo(u) {
-    return u.estado === "ocupada"
-      ? `<span class="unidad-termo" title="Termo encendido">\u{1F975}</span>`
-      : `<span class="unidad-termo" title="Termo apagado">\u{1F976}</span>`;
+    if (u.termo_online === false) {
+      return `<span class="unidad-termo" title="Termo sin conexión">❓</span>`;
+    }
+    if (u.termo_encendido === true) {
+      return `<span class="unidad-termo" title="Termo encendido">\u{1F975}</span>`;
+    }
+    if (u.termo_encendido === false) {
+      return `<span class="unidad-termo" title="Termo apagado">\u{1F976}</span>`;
+    }
+    return "";
   }
 
   function cardUnidad(u) {
