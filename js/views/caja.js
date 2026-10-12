@@ -177,7 +177,8 @@ const ViewCaja = (() => {
       </div>`).join("");
     return `
       <div class="card-detail-label">Comprobantes cargados en el turno</div>
-      ${filas}`;
+      ${filas}
+      <div class="card-row"><div class="card-sub">Total</div><div>${val(r.egresos_comprobantes)}</div></div>`;
   }
 
   function depositosDetalleHtml(r) {
