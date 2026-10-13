@@ -470,6 +470,17 @@ body {
 /* Badges de "diferencia" (montos que no cuadran) — rojo sobre blanco fijo, no sigue el tema claro/oscuro */
 .badge-diferencia { color: #b3261e; background: #ffffff; }
 
+/* Monto de diferencia en rojo fuera de un badge (fila de conciliación, cierre de lote, etc.) —
+   mismo rojo fijo que .badge-diferencia, aplicado solo si abs(valor) >= DIFERENCIA_UMBRAL (caja.js) */
+.dif-roja { color: #b3261e; }
+
+.card-help-text {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
 /* --- Limpieza --- */
 
 .unidades-grid {
