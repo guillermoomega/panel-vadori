@@ -2,6 +2,7 @@
   const AREA_DEFAULT = {
     hoy: "hoy",
     suites: "checkins",
+    resto: "reservas-mesa",
     administracion: "caja",
     mas: "mas"
   };
@@ -12,6 +13,7 @@
     calendario:         { area: "suites",         section: document.getElementById("view-calendario"),       render: ViewCalendario.render,      loaded: false },
     estado:             { area: "suites",         section: document.getElementById("view-limpieza"),         render: ViewLimpieza.render,        loaded: false },
     "nueva-reserva":    { area: "suites",         section: document.getElementById("view-nueva-reserva"),    render: ViewReservaCrear.render,    loaded: false },
+    "reservas-mesa":    { area: "resto",          section: document.getElementById("view-reservas-mesa"),    render: ViewReservasMesa.render,    loaded: false },
     caja:               { area: "administracion", section: document.getElementById("view-caja"),             render: ViewCaja.render,            loaded: false },
     horas:              { area: "administracion", section: document.getElementById("view-horas"),            render: ViewHoras.render,           loaded: false },
     resumen:            { area: "administracion", section: document.getElementById("view-resumen"),          render: ViewResumenSemanal.render,  loaded: false },

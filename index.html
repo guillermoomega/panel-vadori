@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icons/icon.svg" />
 <meta name="theme-color" content="#0f766e" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
-<link rel="stylesheet" href="css/styles.css?v=20261001a" />
+<link rel="stylesheet" href="css/styles.css?v=20261015a" />
 </head>
 <body>
 
@@ -25,6 +25,10 @@
     <button type="button" class="rango-tab area-tab-btn" data-seccion="estado">Estado</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="nueva-reserva">Reservas</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="configuracion">Configuración</button>
+  </nav>
+
+  <nav class="rango-tabs area-tabs" data-area="resto" hidden>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="reservas-mesa">Reservas</button>
   </nav>
 
   <nav class="rango-tabs area-tabs" data-area="administracion" hidden>
@@ -56,6 +60,11 @@
   <section id="view-limpieza" class="view" hidden>
     <div id="limpieza-estado" class="estado-msg"></div>
     <div id="limpieza-grid" class="unidades-grid"></div>
+  </section>
+
+  <section id="view-reservas-mesa" class="view" hidden>
+    <div id="reservas-mesa-estado" class="estado-msg"></div>
+    <div id="reservas-mesa-content"></div>
   </section>
 
   <section id="view-nueva-reserva" class="view" hidden>
@@ -111,6 +120,10 @@
     <span class="tab-icon">✓</span>
     <span>Suites</span>
   </button>
+  <button type="button" class="tab-btn" data-area="resto">
+    <span class="tab-icon">🍽</span>
+    <span>Resto</span>
+  </button>
   <button type="button" class="tab-btn" data-area="administracion">
     <span class="tab-icon">$</span>
     <span>Administración</span>
@@ -121,21 +134,22 @@
   </button>
 </nav>
 
-<script src="js/config.js?v=20261001a"></script>
-<script src="js/api.js?v=20261001a"></script>
-<script src="js/utils.js?v=20261001a"></script>
+<script src="js/config.js?v=20261015a"></script>
+<script src="js/api.js?v=20261015a"></script>
+<script src="js/utils.js?v=20261015a"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="js/views/hoy.js?v=20261001a"></script>
-<script src="js/views/limpieza.js?v=20261001a"></script>
-<script src="js/views/calendario.js?v=20261001a"></script>
-<script src="js/views/horas.js?v=20261001a"></script>
-<script src="js/views/checkins.js?v=20261001a"></script>
-<script src="js/views/caja.js?v=20261001a"></script>
-<script src="js/views/resumen_semanal.js?v=20261001a"></script>
-<script src="js/views/cuenta_corriente.js?v=20261001a"></script>
-<script src="js/views/mpago.js?v=20261001a"></script>
-<script src="js/views/reserva_crear.js?v=20261001a"></script>
-<script src="js/views/config_tarifas.js?v=20261001a"></script>
-<script src="js/main.js?v=20261001a"></script>
+<script src="js/views/hoy.js?v=20261015a"></script>
+<script src="js/views/limpieza.js?v=20261015a"></script>
+<script src="js/views/calendario.js?v=20261015a"></script>
+<script src="js/views/horas.js?v=20261015a"></script>
+<script src="js/views/checkins.js?v=20261015a"></script>
+<script src="js/views/caja.js?v=20261015a"></script>
+<script src="js/views/resumen_semanal.js?v=20261015a"></script>
+<script src="js/views/cuenta_corriente.js?v=20261015a"></script>
+<script src="js/views/mpago.js?v=20261015a"></script>
+<script src="js/views/reserva_crear.js?v=20261015a"></script>
+<script src="js/views/config_tarifas.js?v=20261015a"></script>
+<script src="js/views/reservas_mesa.js?v=20261015a"></script>
+<script src="js/main.js?v=20261015a"></script>
 </body>
 </html>
