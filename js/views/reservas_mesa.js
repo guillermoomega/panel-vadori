@@ -82,10 +82,10 @@ const ViewReservasMesa = (() => {
     elEstado().classList.remove("error");
     elContent().innerHTML = "";
     try {
-      const manana = Utils.addDays(Utils.todayISO(), 1);
-      const horizonte = Utils.addDays(manana, 29); // ventana de 30 días desde mañana
-      const rango = await Api.ocupacion(manana, horizonte);
-      const mesasFuturas = (rango.mesas || []).filter(m => m.fecha >= manana);
+      const hoy = Utils.todayISO();
+      const horizonte = Utils.addDays(hoy, 29); // ventana de 30 días desde hoy
+      const rango = await Api.ocupacion(hoy, horizonte);
+      const mesasFuturas = (rango.mesas || []).filter(m => m.fecha >= hoy);
       const dias = agruparPorDia(mesasFuturas);
 
       elEstado().textContent = "";
