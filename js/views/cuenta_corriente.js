@@ -162,10 +162,11 @@ const ViewCuentaCorriente = (() => {
     return `<span class="badge ${clase}">${dias} día${dias === 1 ? "" : "s"}</span>`;
   }
 
-  // Vencida = tiene fecha_vencimiento cargada y ya pasó. Sin fecha_vencimiento no se considera
-  // vencida (no hay plazo pactado con el proveedor todavía).
+  // Vencida = tiene fecha_vencimiento cargada y ya pasó, O no tiene fecha_vencimiento cargada
+  // (sin plazo pactado con el proveedor no hay garantía de que esté al día, así que cuenta
+  // como vencida para no perderla de vista en el filtro "Vencidas").
   function esVencido(c) {
-    return !!c.fecha_vencimiento && c.fecha_vencimiento < Utils.todayISO();
+    return !c.fecha_vencimiento || c.fecha_vencimiento < Utils.todayISO();
   }
 
   function badgeVencido(c) {
