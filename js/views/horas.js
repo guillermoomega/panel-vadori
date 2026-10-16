@@ -180,13 +180,14 @@ const ViewHoras = (() => {
     const fila = document.querySelector(`.mesa-row[data-id="${id}"]`);
     const fecha = fila.querySelector(".fichaje-input-fecha").value;
     const hora = fila.querySelector(".fichaje-input-hora").value;
+    const tipo = fila.querySelector(".fichaje-input-tipo").value;
     if (!fecha || !hora) return;
 
     guardandoFichaje = true;
     elEstado().textContent = "";
     elEstado().classList.remove("error");
     try {
-      await Api.editarFichaje(id, fecha, hora);
+      await Api.editarFichaje(id, fecha, hora, tipo);
       editandoId = null;
       fichajesData = await Api.fichajes(rangoOverride);
       await render();
@@ -297,8 +298,12 @@ const ViewHoras = (() => {
       return `
         <div class="mesa-row" data-id="${f.id}">
           <div class="mesa-row-info">
-            <div>${Utils.escapeHtml(f.nombre || "?")} — ${Utils.escapeHtml(f.tipo || "?")}</div>
+            <div>${Utils.escapeHtml(f.nombre || "?")}</div>
             <div class="mesa-row-sub">
+              <select class="input-fecha fichaje-input-tipo">
+                <option value="Entrada"${f.tipo === "Entrada" ? " selected" : ""}>Entrada</option>
+                <option value="Salida"${f.tipo === "Salida" ? " selected" : ""}>Salida</option>
+              </select>
               <input type="date" class="input-fecha fichaje-input-fecha" value="${isoAFechaInput(f.timestamp)}">
               <input type="time" class="input-fecha fichaje-input-hora" value="${isoAHoraInput(f.timestamp)}">
             </div>
