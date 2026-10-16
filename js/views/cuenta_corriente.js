@@ -175,6 +175,11 @@ const ViewCuentaCorriente = (() => {
       : `<span class="badge badge-ok">No vencida</span>`;
   }
 
+  function nombreProveedor(c) {
+    const nombre = c.proveedor || "Sin proveedor";
+    return c.proveedor_alias ? `${nombre} (${c.proveedor_alias})` : nombre;
+  }
+
   function cardComprobante(c) {
     const subPartes = [];
     subPartes.push(Utils.fechaLarga(c.fecha));
@@ -200,7 +205,7 @@ const ViewCuentaCorriente = (() => {
             <input type="checkbox" class="cc-check" data-id="${Utils.escapeHtml(c.id)}"${checked}>
           </label>
           <div class="card-main">
-            <div class="card-title">${Utils.escapeHtml(c.proveedor || "Sin proveedor")}</div>
+            <div class="card-title">${Utils.escapeHtml(nombreProveedor(c))}</div>
             <div class="card-sub">${sub}${tieneDetalle ? ' <span class="card-info-icon">ⓘ</span>' : ""}</div>
           </div>
           <div class="card-meta">

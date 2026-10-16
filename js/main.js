@@ -19,7 +19,7 @@
     resumen:            { area: "administracion", section: document.getElementById("view-resumen"),          render: ViewResumenSemanal.render,  loaded: false },
     "cuenta-corriente": { area: "administracion", section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false },
     mpago:              { area: "administracion", section: document.getElementById("view-mpago"),            render: ViewMpago.render,           loaded: false },
-    proveedores:        { area: "administracion", section: document.getElementById("view-proveedores"),      render: null,                       loaded: true },
+    proveedores:        { area: "administracion", section: document.getElementById("view-proveedores"),      render: ViewProveedores.render,     loaded: false },
     configuracion:      { area: "suites",         section: document.getElementById("view-configuracion"),   render: ViewConfigTarifas.render,   loaded: false },
     mas:                { area: "mas",            section: document.getElementById("view-mas"),              render: null,                       loaded: true }
   };
