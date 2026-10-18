@@ -13,6 +13,9 @@ const ViewHoras = (() => {
   let nuevoFichajeVisible = false;
   let guardandoFichaje = false;
 
+  let jornalVisible = false;
+  let guardandoJornal = false;
+
   let excluidos = new Set(); // nombres excluidos del pago; se reinicia en cada carga de datos
   let filtroArea = ""; // "" = todas; se reinicia en cada carga de datos
 
@@ -75,6 +78,17 @@ const ViewHoras = (() => {
         rerenderContent();
         return;
       }
+      const btnJornalToggle = ev.target.closest("#horas-btn-jornal");
+      if (btnJornalToggle) {
+        jornalVisible = !jornalVisible;
+        rerenderContent();
+        return;
+      }
+      const btnGuardarJornal = ev.target.closest("#horas-btn-guardar-jornal");
+      if (btnGuardarJornal) {
+        guardarJornal();
+        return;
+      }
       const btnGuardarNuevo = ev.target.closest("#horas-btn-guardar-nuevo");
       if (btnGuardarNuevo) {
         guardarNuevoFichaje();
@@ -97,6 +111,12 @@ const ViewHoras = (() => {
       if (btnGuardarEdit) {
         guardarEdicionFichaje(btnGuardarEdit.dataset.id);
       }
+    });
+    // Al elegir alguien del equipo, se preselecciona su categoría (se puede cambiar)
+    elContent().addEventListener("input", (ev) => {
+      if (ev.target.id !== "jornal-nombre" || !ultimoData) return;
+      const persona = (ultimoData.equipo || []).find(p => p.nombre === ev.target.value.trim());
+      if (persona && persona.categoria_id) document.getElementById("jornal-categoria").value = persona.categoria_id;
     });
     elContent().addEventListener("change", (ev) => {
       const areaSelect = ev.target.closest("#horas-filtro-area");
@@ -173,6 +193,67 @@ const ViewHoras = (() => {
     } finally {
       guardandoFichaje = false;
     }
+  }
+
+  async function guardarJornal() {
+    if (guardandoJornal) return;
+    const nombre = document.getElementById("jornal-nombre").value.trim();
+    const categoria_id = document.getElementById("jornal-categoria").value;
+    const horasTxt = document.getElementById("jornal-horas").value.replace(",", ".");
+    const fecha = document.getElementById("jornal-fecha").value;
+    const horas = Number(horasTxt);
+    if (!nombre || !categoria_id || !fecha || !horasTxt) {
+      elEstado().textContent = "Completá nombre, categoría, horas y fecha.";
+      elEstado().classList.add("error");
+      return;
+    }
+    if (!(horas > 0 && horas <= 15)) {
+      elEstado().textContent = "Las horas tienen que ser un número mayor a 0 y hasta 15.";
+      elEstado().classList.add("error");
+      return;
+    }
+
+    guardandoJornal = true;
+    const btn = document.getElementById("horas-btn-guardar-jornal");
+    if (btn) { btn.disabled = true; btn.textContent = "Guardando…"; }
+    elEstado().textContent = "";
+    elEstado().classList.remove("error");
+    try {
+      const res = await Api.cargarJornal({ nombre, categoria_id, horas, fecha });
+      jornalVisible = false;
+      if (fichajesVisibles) fichajesData = await Api.fichajes(rangoOverride);
+      await render();
+      elEstado().textContent = `Jornal cargado: ${nombre}, ${horas} h de ${res.categoria} (${Utils.formatMonto(res.monto)}).`;
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+      const btnAfter = document.getElementById("horas-btn-guardar-jornal");
+      if (btnAfter) { btnAfter.disabled = false; btnAfter.textContent = "Guardar jornal"; }
+    } finally {
+      guardandoJornal = false;
+    }
+  }
+
+  function jornalSectionHtml(data) {
+    const categorias = data.categorias || [];
+    const opcionesCat = categorias.map(c =>
+      `<option value="${Utils.escapeHtml(c.id)}">${Utils.escapeHtml(c.nombre)}${c.jornal ? ` — ${Utils.formatMonto(c.jornal)}/h` : ""}</option>`).join("");
+    const opcionesEquipo = (data.equipo || []).map(p => `<option value="${Utils.escapeHtml(p.nombre)}"></option>`).join("");
+    return `
+      <div class="horas-periodo">
+        <button type="button" id="horas-btn-jornal" class="btn-link">${jornalVisible ? "Cancelar" : "+ Cargar jornal"}</button>
+      </div>
+      <div class="card-walkin-form jornal-form" ${jornalVisible ? "" : "hidden"}>
+        <input type="text" id="jornal-nombre" class="input-fecha" placeholder="Nombre" list="jornal-equipo" autocomplete="off">
+        <datalist id="jornal-equipo">${opcionesEquipo}</datalist>
+        <select id="jornal-categoria" class="input-fecha">
+          <option value="">Categoría…</option>
+          ${opcionesCat}
+        </select>
+        <input type="number" id="jornal-horas" class="input-fecha" placeholder="Horas trabajadas" min="0.25" max="15" step="0.25" inputmode="decimal">
+        <input type="date" id="jornal-fecha" class="input-fecha" value="${isoAFechaInput(new Date())}" title="Día trabajado">
+        <button type="button" id="horas-btn-guardar-jornal" class="btn-walkin-confirmar">Guardar jornal</button>
+      </div>`;
   }
 
   async function guardarEdicionFichaje(id) {
@@ -398,6 +479,7 @@ const ViewHoras = (() => {
 
       ${filtroAreaHtml(data)}
       <div class="section-title">Horas por persona</div>
+      ${jornalSectionHtml(data)}
       ${personasHtml}
       <div class="card card-row">
         <div class="card-main">

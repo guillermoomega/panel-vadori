@@ -868,3 +868,8 @@ body {
   cursor: pointer;
 }
 .btn-peligro:disabled { opacity: 0.6; cursor: default; }
+
+/* Horas: formulario "Cargar jornal" (5 campos: en pantallas angostas pasa a varias líneas) */
+.jornal-form { flex-wrap: wrap; }
+.jornal-form .input-fecha { flex: 1 1 140px; min-width: 0; }
+.jornal-form .btn-walkin-confirmar { flex: 1 1 100%; }
