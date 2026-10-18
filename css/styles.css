@@ -563,6 +563,8 @@ body {
   text-transform: capitalize;
 }
 
+.btn-link.btn-borrar-jornal { color: var(--bad); }
+
 .btn-link {
   background: none;
   border: none;

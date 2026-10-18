@@ -70,6 +70,7 @@ const Api = (() => {
     editarFichaje: (id, fecha, hora, tipo) => post("/fichajes/editar", { id, fecha, hora, tipo }),
     crearFichaje: ({ nombre, tipo, fecha, hora }) => post("/fichajes/crear", { nombre, tipo, fecha, hora }),
     cargarJornal: ({ nombre, categoria_id, horas, fecha }) => post("/horas/jornal", { nombre, categoria_id, horas, fecha }),
+    borrarJornal: (id) => post("/horas/jornal/borrar", { id }),
     mpago: (rango) => get("/mpago", rango || {}),
     imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id }) =>
       post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id }),

@@ -15,6 +15,7 @@ const ViewHoras = (() => {
 
   let jornalVisible = false;
   let guardandoJornal = false;
+  let borrandoJornal = false;
 
   let excluidos = new Set(); // nombres excluidos del pago; se reinicia en cada carga de datos
   let filtroArea = ""; // "" = todas; se reinicia en cada carga de datos
@@ -92,6 +93,11 @@ const ViewHoras = (() => {
       const btnGuardarNuevo = ev.target.closest("#horas-btn-guardar-nuevo");
       if (btnGuardarNuevo) {
         guardarNuevoFichaje();
+        return;
+      }
+      const btnBorrarJornal = ev.target.closest(".btn-borrar-jornal");
+      if (btnBorrarJornal) {
+        borrarJornal(btnBorrarJornal.dataset.id);
         return;
       }
       const btnEditar = ev.target.closest(".btn-editar-fichaje");
@@ -231,6 +237,32 @@ const ViewHoras = (() => {
       if (btnAfter) { btnAfter.disabled = false; btnAfter.textContent = "Guardar jornal"; }
     } finally {
       guardandoJornal = false;
+    }
+  }
+
+  // Borra un jornal cargado desde el panel: el backend elimina sus dos registros (Entrada y Salida)
+  async function borrarJornal(id) {
+    if (borrandoJornal || !fichajesData) return;
+    const f = fichajesData.fichajes.find(x => x.id === id);
+    if (!f) return;
+    const ok = window.confirm(`¿Borrar el jornal de ${f.nombre || "?"} del ${formatFechaHora(f.timestamp)}?
+
+Se eliminan su Entrada y su Salida.`);
+    if (!ok) return;
+
+    borrandoJornal = true;
+    elEstado().textContent = "Borrando jornal…";
+    elEstado().classList.remove("error");
+    try {
+      await Api.borrarJornal(id);
+      fichajesData = await Api.fichajes(rangoOverride);
+      await render();
+      elEstado().textContent = `Jornal de ${f.nombre || "?"} borrado.`;
+    } catch (err) {
+      elEstado().textContent = err.message;
+      elEstado().classList.add("error");
+    } finally {
+      borrandoJornal = false;
     }
   }
 
@@ -395,14 +427,21 @@ const ViewHoras = (() => {
           </div>
         </div>`;
     }
-    const notaHtml = f.tiene_timpstamp ? "" : ` <span class="badge badge-warn">Hora aproximada</span>`;
+    const notaHtml = (f.tiene_timpstamp ? "" : ` <span class="badge badge-warn">Hora aproximada</span>`)
+      + (f.categoria ? ` <span class="badge badge-neutral">Jornal</span>` : "");
+    const borrarHtml = f.categoria
+      ? `<button type="button" class="btn-link btn-borrar-jornal" data-id="${f.id}">Borrar</button>`
+      : "";
     return `
       <div class="mesa-row" data-id="${f.id}">
         <div class="mesa-row-info">
           <div>${Utils.escapeHtml(f.nombre || "?")} — ${Utils.escapeHtml(f.tipo || "?")}</div>
           <div class="mesa-row-sub">${formatFechaHora(f.timestamp)}${notaHtml}</div>
         </div>
-        <button type="button" class="btn-link btn-editar-fichaje" data-id="${f.id}">Editar</button>
+        <div class="card-right">
+          <button type="button" class="btn-link btn-editar-fichaje" data-id="${f.id}">Editar</button>
+          ${borrarHtml}
+        </div>
       </div>`;
   }
 
