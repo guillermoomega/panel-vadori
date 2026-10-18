@@ -118,12 +118,6 @@ const ViewHoras = (() => {
         guardarEdicionFichaje(btnGuardarEdit.dataset.id);
       }
     });
-    // Al elegir alguien del equipo, se preselecciona su categoría (se puede cambiar)
-    elContent().addEventListener("input", (ev) => {
-      if (ev.target.id !== "jornal-nombre" || !ultimoData) return;
-      const persona = (ultimoData.equipo || []).find(p => p.nombre === ev.target.value.trim());
-      if (persona && persona.categoria_id) document.getElementById("jornal-categoria").value = persona.categoria_id;
-    });
     elContent().addEventListener("change", (ev) => {
       const areaSelect = ev.target.closest("#horas-filtro-area");
       if (areaSelect) {
@@ -270,14 +264,13 @@ Se eliminan su Entrada y su Salida.`);
     const categorias = data.categorias || [];
     const opcionesCat = categorias.map(c =>
       `<option value="${Utils.escapeHtml(c.id)}">${Utils.escapeHtml(c.nombre)}${c.jornal ? ` — ${Utils.formatMonto(c.jornal)}/h` : ""}</option>`).join("");
-    const opcionesEquipo = (data.equipo || []).map(p => `<option value="${Utils.escapeHtml(p.nombre)}"></option>`).join("");
     return `
       <div class="horas-periodo">
         <button type="button" id="horas-btn-jornal" class="btn-link">${jornalVisible ? "Cancelar" : "+ Cargar jornal"}</button>
       </div>
       <div class="card-walkin-form jornal-form" ${jornalVisible ? "" : "hidden"}>
-        <input type="text" id="jornal-nombre" class="input-fecha" placeholder="Nombre" list="jornal-equipo" autocomplete="off">
-        <datalist id="jornal-equipo">${opcionesEquipo}</datalist>
+        <!-- Nombre eventual: queda solo en Fichajes, no se vincula con Equipo -->
+        <input type="text" id="jornal-nombre" class="input-fecha" placeholder="Nombre" autocomplete="off">
         <select id="jornal-categoria" class="input-fecha">
           <option value="">Categoría…</option>
           ${opcionesCat}
