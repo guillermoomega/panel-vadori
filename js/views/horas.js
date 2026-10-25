@@ -486,7 +486,9 @@ Se eliminan su Entrada y su Salida.`);
 
     const totalMontoAjustado = totalAjustado(data);
     const totalTxt = visibles.length ? Utils.formatMonto(totalMontoAjustado) : "—";
-    const puedePagar = visibles.length > 0 && totalMontoAjustado > 0;
+    const hayMontoAPagar = visibles.length > 0 && totalMontoAjustado > 0;
+    const puedePagar = hayMontoAPagar && filtroArea !== "";
+    const necesitaElegirArea = hayMontoAPagar && filtroArea === "";
 
     const sinResolverHtml = data.sin_resolver.length
       ? `
@@ -520,6 +522,7 @@ Se eliminan su Entrada y su Salida.`);
         <div class="card-right">
           <span class="card-hora">${totalTxt}</span>
           ${puedePagar ? `<button type="button" id="horas-btn-pagar" class="btn-sumar">Pagar</button>` : ""}
+          ${necesitaElegirArea ? `<span class="badge badge-warn">Elegí un área para pagar</span>` : ""}
         </div>
       </div>
 
