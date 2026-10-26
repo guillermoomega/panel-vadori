@@ -297,6 +297,25 @@ const ViewCaja = (() => {
       </div>`;
   }
 
+  // Comprobantes Caja GV del período que no cayeron dentro del horario de ningún turno
+  // (ej. sueldos pagados desde el panel fuera del horario de caja).
+  function sinTurnoHtml(data) {
+    const lista = data.comprobantes_sin_turno || [];
+    if (!lista.length) return "";
+    const filas = lista.map(c => `
+      <div class="card-row">
+        <div class="card-sub">${c.fecha ? Utils.fechaCortaConDia(c.fecha) : "—"} · ${Utils.escapeHtml(c.proveedor || "Sin proveedor")}${c.categoria ? " · " + Utils.escapeHtml(c.categoria) : ""}</div>
+        <div>${val(c.monto)}</div>
+      </div>`).join("");
+    return `
+      <div class="section-title">Egresos sin turno asociado</div>
+      <div class="estado-msg" style="padding-top: 0;">Pagos de Caja GV hechos fuera del horario de cualquier turno (por ejemplo, sueldos pagados desde el panel).</div>
+      <div class="card">
+        ${filas}
+        <div class="card-row"><div class="card-sub"><strong>Total</strong></div><div><strong>${val(data.egresos_sin_turno_total)}</strong></div></div>
+      </div>`;
+  }
+
   function renderContent(data) {
     const reportesHtml = data.reportes.length
       ? data.reportes.map(cardReporte).join("")
@@ -318,6 +337,7 @@ const ViewCaja = (() => {
       <div class="section-title">Reportes de caja</div>
       <div class="estado-msg" style="padding-top: 0;">Corresponden únicamente a la caja principal (Caja GV) — no incluyen otras cajas del predio.</div>
       ${reportesHtml}
+      ${sinTurnoHtml(data)}
     `;
   }
 

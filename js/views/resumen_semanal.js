@@ -46,6 +46,8 @@ const ViewResumenSemanal = (() => {
 
   const LABEL_CATEGORIA = {
     "sueldos": "Sueldos",
+    "sueldos cocina": "Sueldos cocina",
+    "sueldos salon": "Sueldos salón",
     "servicios": "Servicios",
     "mantenimiento": "Mantenimiento",
     "insumos cocina": "Insumos cocina",
