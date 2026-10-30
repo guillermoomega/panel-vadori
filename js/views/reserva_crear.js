@@ -27,6 +27,10 @@ const ViewReservaCrear = (() => {
       if (ev.target.id === "reserva-tipo-unidad") {
         actualizarOpcionesUnidad();
         actualizarOpcionesPaquete();
+        completarCostoDesdePaquete();
+      }
+      if (ev.target.id === "reserva-paquete") {
+        completarCostoDesdePaquete();
       }
     });
 
@@ -86,6 +90,18 @@ const ViewReservaCrear = (() => {
     paqueteSel.innerHTML = `<option value="">Sin paquete</option>` +
       opciones.map(o => `<option value="${Utils.escapeHtml(o.nombre)}">${Utils.escapeHtml(o.etiqueta)}</option>`).join("");
     if (opciones.some(o => o.nombre === valorPrevio)) paqueteSel.value = valorPrevio;
+  }
+
+  // Solo al elegir paquete o cambiar el tipo: el costo sigue siendo editable a mano después.
+  function completarCostoDesdePaquete() {
+    const tipoSel = document.getElementById("reserva-tipo-unidad");
+    const paqueteSel = document.getElementById("reserva-paquete");
+    const costoInput = document.getElementById("reserva-costo");
+    if (!tipoSel || !paqueteSel || !costoInput || !paqueteSel.value) return;
+    const p = paquetesDisponibles.find(x => x.nombre === paqueteSel.value);
+    if (!p) return;
+    const precio = tipoSel.value === "cuarto" ? p.precio_cuarto : p.precio_suite;
+    if (precio) costoInput.value = precio;
   }
 
   async function handleBuscar() {
@@ -193,8 +209,12 @@ const ViewReservaCrear = (() => {
     const unidadSel = form.querySelector("#reserva-unidad");
     const unidad_id = unidadSel.value;
 
-    if (!nombre || !checkin || !checkout || !adultos || adultos < 1) {
-      alert("Completá nombre, ingreso, salida y adultos.");
+    if (!nombre || !checkin || !checkout || !adultos || adultos < 1 || !telefono) {
+      alert("Completá nombre, ingreso, salida, adultos y teléfono.");
+      return;
+    }
+    if (telefono.replace(/\D/g, "").length < 8) {
+      alert("El teléfono no parece válido. Ingresalo con código de área, ej: 5493876123456.");
       return;
     }
     if (checkout <= checkin) {
@@ -243,8 +263,12 @@ const ViewReservaCrear = (() => {
         if (res.unidad_actualizada === false) {
           msg += " " + (res.error || "No se pudo actualizar la unidad asignada, revisá el estado manualmente.");
         }
-      } else if (unidad_id && !res.unidad_asignada) {
-        msg += " " + (res.error || "No se pudo marcar la unidad como ocupada, revisá el estado de la unidad manualmente.");
+      } else {
+        if (unidad_id && !res.unidad_asignada) {
+          msg += " " + (res.error || "No se pudo marcar la unidad como ocupada, revisá el estado de la unidad manualmente.");
+        }
+        if (res.bienvenida === "enviada") msg += "\n\nSe le envió al huésped el mensaje de bienvenida por WhatsApp.";
+        else if (res.bienvenida === "error") msg += "\n\nNo se pudo enviar el mensaje de bienvenida por WhatsApp.";
       }
       alert(msg);
       salirModoEdicion();
@@ -325,8 +349,8 @@ const ViewReservaCrear = (() => {
         </div>
 
         <div class="form-field">
-          <label for="reserva-telefono">Teléfono</label>
-          <input type="tel" id="reserva-telefono" placeholder="Ej: 5493876123456">
+          <label for="reserva-telefono">Teléfono *</label>
+          <input type="tel" id="reserva-telefono" placeholder="Ej: 5493876123456" required>
         </div>
 
         <div class="form-row">
