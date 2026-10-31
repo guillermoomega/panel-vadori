@@ -200,13 +200,23 @@ const ViewCaja = (() => {
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)} · Dif vs. contado ${valDif(r.diferencia_terminal_vs_usado)}</div></div>`;
   }
 
+  // Sueldos pagados desde el panel: una sub-fila por persona (nombre y monto).
+  function detalleSueldosHtml(c) {
+    if (!c.detalle_sueldos || !c.detalle_sueldos.length) return "";
+    return c.detalle_sueldos.map(d => `
+      <div class="card-row" style="padding-left:16px;">
+        <div class="card-sub">↳ ${Utils.escapeHtml(d.nombre)}${d.horas != null ? " · " + d.horas + " h" : ""}</div>
+        <div class="card-sub">${val(d.monto)}</div>
+      </div>`).join("");
+  }
+
   function comprobantesDetalleHtml(r) {
     if (!r.comprobantes || !r.comprobantes.length) return `<div class="empty-msg" style="padding:0 0 4px;">Sin comprobantes cargados en este turno.</div>`;
     const filas = r.comprobantes.map(c => `
       <div class="card-row">
         <div class="card-sub">${c.fecha ? Utils.fechaCortaConDia(c.fecha) : "—"} · ${Utils.escapeHtml(c.proveedor || "Sin proveedor")}${c.negocio ? " · " + Utils.escapeHtml(c.negocio) : ""}</div>
         <div>${val(c.monto)}</div>
-      </div>`).join("");
+      </div>${detalleSueldosHtml(c)}`).join("");
     return `
       ${filas}
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.egresos_comprobantes)}</div></div>`;
@@ -337,7 +347,7 @@ const ViewCaja = (() => {
       <div class="card-row">
         <div class="card-sub">${c.fecha ? Utils.fechaCortaConDia(c.fecha) : "—"} · ${Utils.escapeHtml(c.proveedor || "Sin proveedor")}${c.categoria ? " · " + Utils.escapeHtml(c.categoria) : ""}</div>
         <div>${val(c.monto)}</div>
-      </div>`).join("");
+      </div>${detalleSueldosHtml(c)}`).join("");
     return `
       <div class="section-title">Egresos sin turno asociado</div>
       <div class="estado-msg" style="padding-top: 0;">Pagos de Caja GV hechos fuera del horario de cualquier turno (por ejemplo, sueldos pagados desde el panel).</div>

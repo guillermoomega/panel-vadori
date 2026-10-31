@@ -75,7 +75,9 @@ const ViewResumenSemanal = (() => {
     const registrado = c.registrado_por ? Utils.escapeHtml(c.registrado_por) : "";
     const label = `${fechaTxt} · ${proveedor}`;
     const valor = registrado ? `${Utils.formatMonto(c.monto)} — ${registrado}` : Utils.formatMonto(c.monto);
-    return `<div class="card-detail-label">${label}</div><div>${valor}</div>`;
+    const personas = (c.detalle_sueldos || []).map(d =>
+      `<div class="card-detail-label" style="padding-left:16px;">↳ ${Utils.escapeHtml(d.nombre)}</div><div>${Utils.formatMonto(d.monto)}</div>`).join("");
+    return `<div class="card-detail-label">${label}</div><div>${valor}</div>${personas}`;
   }
 
   function filaCategoria(c) {
