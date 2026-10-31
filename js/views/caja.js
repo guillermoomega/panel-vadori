@@ -106,6 +106,34 @@ const ViewCaja = (() => {
     return `<span class="badge ${clase}">Egresos vs comprobantes: diferencia ${Utils.formatMonto(diff)}</span>`;
   }
 
+  // El monto inicial de una caja debería ser el efectivo contado (Total caja Usado) al cierre
+  // de la caja anterior. Los depósitos de ese día no se descuentan, solo se muestran como
+  // posible explicación de la diferencia.
+  function badgeMontoInicial(r) {
+    if (!r.turno_anterior) return "";
+    const diff = r.diferencia_monto_inicial;
+    const nivel = nivelDif(diff);
+    if (nivel === "sindata") return `<span class="badge badge-neutral">Monto inicial sin dato para comparar</span>`;
+    if (nivel === "ok") return `<span class="badge badge-ok">Inicial coincide con el cierre anterior</span>`;
+    const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
+    return `<span class="badge ${clase}">Inicial vs. cierre anterior: diferencia ${Utils.formatMonto(diff)}</span>`;
+  }
+
+  function montoInicialHtml(r) {
+    const a = r.turno_anterior;
+    const origen = a
+      ? `${a.fecha_apertura ? Utils.fechaCortaConDia(a.fecha_apertura) : "—"} ${a.hora_apertura ? a.hora_apertura.slice(0, 5) : ""} – ${a.hora_cierre ? a.hora_cierre.slice(0, 5) : "—"}`
+      : "";
+    return `
+      <div class="card-detail-label">Monto inicial</div>
+      <div class="card-row"><div class="card-sub">Según arqueo</div><div>${val(r.monto_inicial)}</div></div>
+      ${a ? `
+      <div class="card-row"><div class="card-sub">Efectivo contado al cierre anterior (${origen})</div><div>${val(a.efectivo_contado)}</div></div>
+      <div class="card-row"><div class="card-sub">Diferencia</div><div>${valDif(r.diferencia_monto_inicial)}</div></div>
+      ${a.depositos_efectivo ? `<div class="card-row"><div class="card-sub">Depósitos registrados ese día</div><div>${val(a.depositos_efectivo)}</div></div>` : ""}`
+      : `<div class="empty-msg" style="padding:0 0 4px;">No hay caja anterior en los 15 días previos para comparar.</div>`}`;
+  }
+
   function filaMedioPago(nombre, fuente, usado, diferencia) {
     return `
       <div class="card-row">
@@ -250,8 +278,11 @@ const ViewCaja = (() => {
         <div class="card-row" style="flex-wrap: wrap; gap: 6px; margin-top: 6px;">
           ${badgeDiferenciaTotal(r)}
           ${badgeEgresosComprobantes(r)}
+          ${badgeMontoInicial(r)}
         </div>
         <div class="card-detail">
+          ${montoInicialHtml(r)}
+
           <div class="card-detail-label">Ingresos</div>
           <div class="card-row"><div class="card-sub">Efectivo</div><div>${val(r.ventas_efectivo)}</div></div>
           <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.ventas_tarjeta)}</div></div>
