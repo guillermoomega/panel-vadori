@@ -161,20 +161,6 @@ const ViewCaja = (() => {
       </div>`;
   }
 
-  function badgeTransferenciaVsImputado(r) {
-    // El "Ingreso en transferencia" del ticket de Cierre de Lote (terminal_transferencia) es la
-    // prueba externa de lo cobrado por QR/MercadoPago ese turno; se cruza contra lo que
-    // efectivamente se imputó desde la vista M.Pago (transferencias_mp_total). Avisa cuando el
-    // ticket dice que entró transferencia pero todavía no se imputó nada, o el monto no coincide.
-    if (r.terminal_transferencia === null || r.terminal_transferencia === undefined) return "";
-    const diff = r.diferencia_transferencia_mp_vs_terminal;
-    const nivel = nivelDif(diff);
-    if (nivel === "sindata") return "";
-    if (nivel === "ok") return `<span class="badge badge-ok">QR del cierre de lote coincide con lo imputado</span>`;
-    const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
-    return `<span class="badge ${clase}">QR cierre de lote vs. imputado: diferencia ${Utils.formatMonto(diff)}</span>`;
-  }
-
   function badgeTerminalVsUsado(r) {
     if (r.terminal_total === null || r.terminal_total === undefined) return "";
     const diff = r.diferencia_terminal_vs_usado;
@@ -186,7 +172,9 @@ const ViewCaja = (() => {
   }
 
   // Cierre de Lote de la terminal bancaria: fuente externa distinta tanto del ticket de Arqueo
-  // de Caja como de las transferencias MercadoPago imputadas. La línea que el ticket de Cierre
+  // de Caja como de las transferencias MercadoPago imputadas. El POS registra los cobros QR de la
+  // terminal como "Tarjeta", por eso el total del cierre se compara contra la tarjeta contada y el
+  // QR no se cruza con lo imputado en M.Pago (2026-10-31). La línea que el ticket de Cierre
   // de Lote llama "transferencia" es en realidad lo cobrado por QR en la terminal — se muestra
   // como "QR" (antes decía "Transferencia/QR", cambiado a pedido del usuario 2026-10-12 para no
   // confundirla con las Transferencias MercadoPago, que son un ingreso aparte).
@@ -195,7 +183,7 @@ const ViewCaja = (() => {
     if (sinDatos) return "";
     return `
       <div class="card-detail-label">Cierre de lote (terminal bancaria)</div>
-      <div class="card-row"><div class="card-sub">QR</div><div>${val(r.terminal_transferencia)} · Dif vs. imputado ${valDif(r.diferencia_transferencia_mp_vs_terminal)}</div></div>
+      <div class="card-row"><div class="card-sub">QR</div><div>${val(r.terminal_transferencia)}</div></div>
       <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.terminal_tarjeta)}</div></div>
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)} · Dif vs. contado ${valDif(r.diferencia_terminal_vs_usado)}</div></div>`;
   }
@@ -253,12 +241,22 @@ const ViewCaja = (() => {
       </div>`;
   }
 
-  // Total de ingresos del turno: lo que ya trae el ticket (Efectivo + Tarjeta + QR, bajo
-  // Ingresos_total del arqueo) más las transferencias MercadoPago imputadas desde el panel,
-  // que el ticket nunca vio. Mismo criterio que usa el backend para el agregado `totales`.
+  // Total de ingresos del turno: lo que ya trae el ticket (Ingresos_total del arqueo). Las
+  // transferencias MercadoPago imputadas desde el panel solo se suman cuando el ticket no trae
+  // la línea "Transferencia" (arqueos anteriores al 2026-10-12); si la trae, son la misma plata.
+  // Mismo criterio que usa el backend para el agregado `totales`.
   function totalIngresos(r) {
     if (r.ingresos_total === null || r.ingresos_total === undefined) return null;
-    return r.ingresos_total + (r.transferencias_mp_total || 0);
+    return r.ingresos_total + (r.transferencias_mp_en_ticket ? 0 : (r.transferencias_mp_total || 0));
+  }
+
+  function filaTransferenciasMP(r) {
+    if (!r.transferencias_mp_en_ticket) return filaMedioPago("Transferencias MP", null, r.transferencias_mp_total || null, null);
+    return `
+      <div class="card-row">
+        <div class="card-sub">Transferencia vs. M.Pago</div>
+        <div>Ticket ${val(r.total_usado_transferencia)} · Imputado ${val(r.transferencias_mp_total || 0)} · Diferencia ${valDif(r.diferencia_transferencia_mp_vs_usado)}</div>
+      </div>`;
   }
 
   function headerAperturaCierre(r) {
@@ -296,8 +294,8 @@ const ViewCaja = (() => {
           <div class="card-detail-label">Ingresos</div>
           <div class="card-row"><div class="card-sub">Efectivo</div><div>${val(r.ventas_efectivo)}</div></div>
           <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.ventas_tarjeta)}</div></div>
-          <div class="card-row"><div class="card-sub">QR</div><div>${val(r.ventas_transferencia)}</div></div>
-          ${r.transferencias_mp_total ? `<div class="card-row"><div class="card-sub">Transferencias MercadoPago imputadas</div><div>${val(r.transferencias_mp_total)}</div></div>` : ""}
+          <div class="card-row"><div class="card-sub">Transferencia</div><div>${val(r.ventas_transferencia)}</div></div>
+          ${r.transferencias_mp_total && !r.transferencias_mp_en_ticket ? `<div class="card-row"><div class="card-sub">Transferencias MercadoPago imputadas</div><div>${val(r.transferencias_mp_total)}</div></div>` : ""}
           <div class="card-row"><div class="card-sub"><strong>Total ingresos</strong></div><div><strong>${val(totalIngresos(r))}</strong></div></div>
 
           <div class="card-detail-label">Egresos</div>
@@ -315,8 +313,8 @@ const ViewCaja = (() => {
           <div class="card-detail-label">Conciliación por medio de pago</div>
           ${filaMedioPago("Efectivo", r.total_fuente_efectivo, r.total_usado_efectivo, r.diferencia_efectivo)}
           ${filaMedioPago("Tarjeta", r.total_fuente_tarjeta, r.total_usado_tarjeta, r.diferencia_tarjeta)}
-          ${filaMedioPago("QR", r.total_fuente_transferencia, r.total_usado_transferencia, r.diferencia_transferencia)}
-          ${filaMedioPago("Transferencias MP", null, r.transferencias_mp_total || null, null)}
+          ${filaMedioPago("Transferencia", r.total_fuente_transferencia, r.total_usado_transferencia, r.diferencia_transferencia)}
+          ${filaTransferenciasMP(r)}
           <div class="card-row"><div class="card-sub">Total</div><div>Diferencia ${valDif(diferenciaCajaTotal)}</div></div>
           <div class="card-help-text">Diferencia positiva = sobra; negativa = falta.</div>
 
@@ -329,7 +327,6 @@ const ViewCaja = (() => {
           ${terminalHtml(r) ? `
           <div class="card-row" style="flex-wrap: wrap; gap: 6px; margin-top: 8px;">
             ${badgeTerminalVsUsado(r)}
-            ${badgeTransferenciaVsImputado(r)}
           </div>
           ${terminalHtml(r)}` : ""}
 
