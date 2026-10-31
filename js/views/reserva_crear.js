@@ -5,6 +5,7 @@ const ViewReservaCrear = (() => {
   let listenersAttached = false;
   let unidadesDisponibles = [];
   let paquetesDisponibles = [];
+  let temporadasDisponibles = [];
   let resultadosBusqueda = [];
 
   let modoEdicion = false;
@@ -31,6 +32,11 @@ const ViewReservaCrear = (() => {
       }
       if (ev.target.id === "reserva-paquete") {
         completarCostoDesdePaquete();
+      }
+      // El precio depende de la temporada del ingreso; al editar no se pisa el costo ya guardado.
+      if (ev.target.id === "reserva-checkin") {
+        actualizarOpcionesPaquete();
+        if (!modoEdicion) completarCostoDesdePaquete();
       }
     });
 
@@ -73,15 +79,33 @@ const ViewReservaCrear = (() => {
     if (opciones.some(u => u.id === valorPrevio)) unidadSel.value = valorPrevio;
   }
 
+  // Misma regla que el agente (cons_tarifas): temporada según el ingreso (o hoy), fuera de toda temporada = baja;
+  // alta/baja usan su precio propio si está cargado, cualquier otra (media) el precio base.
+  function temporadaIngreso() {
+    const checkin = document.getElementById("reserva-checkin");
+    const fecha = (checkin && checkin.value) || Utils.todayISO();
+    const t = temporadasDisponibles.find(x => x.desde <= fecha && x.hasta >= fecha);
+    return t ? t.nombre : "baja";
+  }
+
+  function precioPaquete(p, tipo, temporada) {
+    const base = tipo === "cuarto" ? p.precio_cuarto : p.precio_suite;
+    const propio = temporada === "alta" ? (tipo === "cuarto" ? p.precio_cuarto_alta : p.precio_suite_alta)
+      : temporada === "baja" ? (tipo === "cuarto" ? p.precio_cuarto_baja : p.precio_suite_baja)
+      : null;
+    return propio != null ? propio : base;
+  }
+
   function actualizarOpcionesPaquete() {
     const tipoSel = document.getElementById("reserva-tipo-unidad");
     const paqueteSel = document.getElementById("reserva-paquete");
     if (!tipoSel || !paqueteSel) return;
     const tipo = tipoSel.value;
+    const temporada = temporadaIngreso();
     const valorPrevio = paqueteSel.value || paqueteActual || "";
     const opciones = paquetesDisponibles.map(p => {
-      const precio = tipo === "cuarto" ? p.precio_cuarto : p.precio_suite;
-      const etiqueta = precio ? `${p.nombre} — ${Utils.formatMonto(precio)}` : p.nombre;
+      const precio = precioPaquete(p, tipo, temporada);
+      const etiqueta = precio ? `${p.nombre} — ${Utils.formatMonto(precio)} (temp. ${temporada})` : p.nombre;
       return { nombre: p.nombre, etiqueta };
     });
     if (paqueteActual && !opciones.some(o => o.nombre === paqueteActual)) {
@@ -100,7 +124,7 @@ const ViewReservaCrear = (() => {
     if (!tipoSel || !paqueteSel || !costoInput || !paqueteSel.value) return;
     const p = paquetesDisponibles.find(x => x.nombre === paqueteSel.value);
     if (!p) return;
-    const precio = tipoSel.value === "cuarto" ? p.precio_cuarto : p.precio_suite;
+    const precio = precioPaquete(p, tipoSel.value, temporadaIngreso());
     if (precio) costoInput.value = precio;
   }
 
@@ -399,6 +423,7 @@ const ViewReservaCrear = (() => {
       const [limpieza, paquetes] = await Promise.all([Api.limpieza(), Api.paquetes()]);
       unidadesDisponibles = limpieza.unidades || [];
       paquetesDisponibles = paquetes.paquetes || [];
+      temporadasDisponibles = paquetes.temporadas || [];
       elEstado().textContent = "";
       elContent().innerHTML = formHtml();
       actualizarOpcionesUnidad();
