@@ -33,6 +33,9 @@ const ViewReservaCrear = (() => {
       if (ev.target.id === "reserva-paquete") {
         completarCostoDesdePaquete();
       }
+      if (ev.target.id === "reserva-buscar-salida" && resultadosBusqueda.length) {
+        renderResultados();
+      }
       // El precio depende de la temporada del ingreso; al editar no se pisa el costo ya guardado.
       if (ev.target.id === "reserva-checkin") {
         actualizarOpcionesPaquete();
@@ -142,18 +145,38 @@ const ViewReservaCrear = (() => {
       const res = await Api.buscarReservas(nombre);
       if (!res.ok) throw new Error(res.error || "No se pudo buscar.");
       resultadosBusqueda = res.reservas || [];
-      if (!resultadosBusqueda.length) {
-        cont.innerHTML = `<p class="reserva-buscar-msg">Sin resultados.</p>`;
-        return;
-      }
-      cont.innerHTML = resultadosBusqueda.map(r => `
-        <button type="button" class="reserva-buscar-item" data-id="${Utils.escapeHtml(r.id)}">
-          <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad) || "—")} ·
-          ${Utils.rangoFechas(r.checkin, r.checkout)} · ${Utils.escapeHtml(r.estado)}
-        </button>`).join("");
+      renderResultados();
     } catch (err) {
       cont.innerHTML = `<p class="reserva-buscar-msg error">${Utils.escapeHtml(err.message)}</p>`;
     }
+  }
+
+  function hoyARG() {
+    return new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  }
+
+  // Filtro por salida sobre lo ya buscado (el backend ordena por ingreso descendente, las vigentes vienen primero)
+  function renderResultados() {
+    const cont = document.getElementById("reserva-buscar-resultados");
+    const filtroSel = document.getElementById("reserva-buscar-salida");
+    if (!cont) return;
+    if (!resultadosBusqueda.length) {
+      cont.innerHTML = `<p class="reserva-buscar-msg">Sin resultados.</p>`;
+      return;
+    }
+    const soloVigentes = !filtroSel || filtroSel.value === "hoy";
+    const hoy = hoyARG();
+    const visibles = soloVigentes ? resultadosBusqueda.filter(r => r.checkout && r.checkout >= hoy) : resultadosBusqueda;
+    if (!visibles.length) {
+      const ocultas = resultadosBusqueda.length;
+      cont.innerHTML = `<p class="reserva-buscar-msg">Sin reservas con salida desde hoy (${ocultas} anterior${ocultas === 1 ? "" : "es"}: elegí "Todas" para verlas).</p>`;
+      return;
+    }
+    cont.innerHTML = visibles.map(r => `
+      <button type="button" class="reserva-buscar-item" data-id="${Utils.escapeHtml(r.id)}">
+        <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad) || "—")} ·
+        ${Utils.rangoFechas(r.checkin, r.checkout)} · ${Utils.escapeHtml(r.estado)}
+      </button>`).join("");
   }
 
   function cargarReservaParaEditar(id) {
@@ -313,6 +336,13 @@ const ViewReservaCrear = (() => {
           <div class="form-field">
             <label for="reserva-buscar-nombre">Buscar reserva existente (por nombre)</label>
             <input type="text" id="reserva-buscar-nombre" placeholder="Ej: Juan Pérez">
+          </div>
+          <div class="form-field reserva-buscar-salida">
+            <label for="reserva-buscar-salida">Salida</label>
+            <select id="reserva-buscar-salida">
+              <option value="hoy" selected>Desde hoy</option>
+              <option value="todas">Todas</option>
+            </select>
           </div>
           <button type="button" id="reserva-buscar-btn" class="btn-secundario">Buscar</button>
         </div>

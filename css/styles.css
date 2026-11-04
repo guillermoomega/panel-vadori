@@ -775,6 +775,7 @@ body {
 }
 
 .reserva-buscar-fila .form-field { flex: 1; }
+.reserva-buscar-fila .form-field.reserva-buscar-salida { flex: 0 0 auto; }
 
 .btn-secundario {
   background: var(--bg);
