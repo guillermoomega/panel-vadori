@@ -830,6 +830,22 @@ body {
 
 .reserva-edicion-banner[hidden] { display: none; }
 
+.reserva-multiple {
+  margin-top: 14px;
+}
+
+.reserva-multiple > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 2px;
+}
+
+.reserva-multiple > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* --- Configuración de tarifas/paquetes --- */
 
 .config-section {

@@ -18,6 +18,12 @@ const ViewReservaCrear = (() => {
     listenersAttached = true;
 
     elContent().addEventListener("submit", async (ev) => {
+      const multi = ev.target.closest("#reserva-multiple-form");
+      if (multi) {
+        ev.preventDefault();
+        await handleSubmitMultiple(multi);
+        return;
+      }
       const form = ev.target.closest("#reserva-crear-form");
       if (!form) return;
       ev.preventDefault();
@@ -25,6 +31,16 @@ const ViewReservaCrear = (() => {
     });
 
     elContent().addEventListener("change", (ev) => {
+      if (ev.target.id === "multi-todas") {
+        document.querySelectorAll(".multi-unidad").forEach(cb => { cb.checked = ev.target.checked; });
+        return;
+      }
+      if (ev.target.classList.contains("multi-unidad")) {
+        const todas = document.getElementById("multi-todas");
+        const cbs = [...document.querySelectorAll(".multi-unidad")];
+        if (todas) todas.checked = cbs.every(cb => cb.checked);
+        return;
+      }
       if (ev.target.id === "reserva-tipo-unidad") {
         actualizarOpcionesUnidad();
         actualizarOpcionesPaquete();
@@ -329,6 +345,127 @@ const ViewReservaCrear = (() => {
     }
   }
 
+  // Varias unidades con las mismas fechas (reemplaza al /bloquear de WhatsApp): una reserva por unidad,
+  // sin WhatsApp ni cambio de estado de la unidad. El backend omite las que ya tienen reserva en esas fechas.
+  async function handleSubmitMultiple(form) {
+    const btn = form.querySelector(".btn-crear-reserva");
+    const seleccion = [...form.querySelectorAll(".multi-unidad:checked")];
+    const unidad_ids = seleccion.map(cb => cb.value);
+    const nombre = form.querySelector("#multi-nombre").value.trim();
+    const checkin = form.querySelector("#multi-checkin").value;
+    const checkout = form.querySelector("#multi-checkout").value;
+    const adultos = parseInt(form.querySelector("#multi-adultos").value, 10) || 1;
+    const estado = form.querySelector("#multi-estado").value;
+    const telefono = form.querySelector("#multi-telefono").value.trim();
+    const observaciones = form.querySelector("#multi-observaciones").value.trim();
+
+    if (!unidad_ids.length) { alert("Elegí al menos una unidad."); return; }
+    if (!nombre || !checkin || !checkout) { alert("Completá nombre o motivo, ingreso y salida."); return; }
+    if (checkout <= checkin) { alert("La salida debe ser posterior al ingreso."); return; }
+
+    const nombresUnidades = seleccion.map(cb => cb.dataset.nombre).join(", ");
+    const resumen = `Nombre: ${nombre}\nUnidades (${unidad_ids.length}): ${nombresUnidades}\n` +
+      `Fechas: ${Utils.rangoFechas(checkin, checkout)}\nEstado: ${estado}`;
+    if (!confirm(`¿Confirmás crear ${unidad_ids.length === 1 ? "esta reserva" : `estas ${unidad_ids.length} reservas`}?\n\n${resumen}`)) return;
+
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Creando…";
+    try {
+      const res = await Api.crearReservasMultiples({
+        unidad_ids, nombre, checkin, checkout, adultos, estado,
+        telefono: telefono || undefined,
+        observaciones: observaciones || undefined
+      });
+      const creadas = res.creadas || [];
+      const omitidas = res.omitidas || [];
+      let msg = res.ok
+        ? `Se ${creadas.length === 1 ? "creó 1 reserva" : `crearon ${creadas.length} reservas`}: ${creadas.map(c => c.unidad).join(", ")}.`
+        : (res.error || "No se pudieron crear las reservas.");
+      if (omitidas.length) {
+        msg += `\n\nNo se crearon (${omitidas.length}):\n` + omitidas.map(o => `• ${o.unidad}: ${o.motivo}`).join("\n");
+      }
+      alert(msg);
+      if (res.ok) {
+        form.reset();
+        form.closest("details").open = false;
+      }
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  }
+
+  function multipleHtml() {
+    const orden = { suite: 0, cuarto: 1 };
+    const unidades = [...unidadesDisponibles].sort((a, b) =>
+      (orden[a.tipo] ?? 2) - (orden[b.tipo] ?? 2) || String(a.nombre).localeCompare(String(b.nombre)));
+    const checks = unidades.map(u => `
+      <label class="checkbox-inline">
+        <input type="checkbox" class="multi-unidad" value="${Utils.escapeHtml(u.id)}" data-nombre="${Utils.escapeHtml(u.nombre)}">
+        ${Utils.escapeHtml(u.nombre)}
+      </label>`).join("");
+    return `
+      <details class="reserva-multiple">
+        <summary>Reservas múltiples / bloquear unidades</summary>
+        <form id="reserva-multiple-form" class="reserva-form">
+          <p class="reserva-buscar-msg">Crea una reserva por cada unidad elegida, con las mismas fechas. Sirve para grupos o para bloquear unidades (mantenimiento, uso propio): el agente no las ofrece en esas fechas. No se envía WhatsApp y las unidades que ya tienen reserva se saltean.</p>
+
+          <div class="form-field">
+            <label>Unidades *</label>
+            <div class="checkbox-group">
+              <label class="checkbox-inline"><input type="checkbox" id="multi-todas"> <strong>Todas</strong></label>
+              ${checks}
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="multi-nombre">Nombre o motivo *</label>
+            <input type="text" id="multi-nombre" placeholder="Ej: BLOQUEADO - mantenimiento, o Grupo Pérez" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="multi-checkin">Ingreso *</label>
+              <input type="date" id="multi-checkin" required>
+            </div>
+            <div class="form-field">
+              <label for="multi-checkout">Salida *</label>
+              <input type="date" id="multi-checkout" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="multi-adultos">Adultos por unidad</label>
+              <input type="number" id="multi-adultos" inputmode="numeric" min="1" value="1">
+            </div>
+            <div class="form-field">
+              <label for="multi-estado">Estado</label>
+              <select id="multi-estado">
+                <option value="Confirmada" selected>Confirmada</option>
+                <option value="Pendiente">Pendiente</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="multi-telefono">Teléfono (opcional)</label>
+            <input type="tel" id="multi-telefono" placeholder="Ej: 5493876123456">
+          </div>
+
+          <div class="form-field">
+            <label for="multi-observaciones">Observaciones</label>
+            <textarea id="multi-observaciones"></textarea>
+          </div>
+
+          <button type="submit" class="btn-crear-reserva">Crear reservas</button>
+        </form>
+      </details>`;
+  }
+
   function formHtml() {
     return `
       <div class="reserva-buscar">
@@ -437,7 +574,9 @@ const ViewReservaCrear = (() => {
         </div>
 
         <button type="submit" class="btn-crear-reserva">Crear reserva</button>
-      </form>`;
+      </form>
+
+      ${multipleHtml()}`;
   }
 
   async function render() {
