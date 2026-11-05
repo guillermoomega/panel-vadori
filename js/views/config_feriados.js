@@ -9,28 +9,27 @@ const ViewConfigFeriados = (() => {
     {
       key: "feriados",
       titulo: "Feriados y vísperas",
-      ayuda: "El agente toma estas fechas como el día que imitan (horarios, cupos y tarifas de suites).",
+      ayuda: "Suites: el día anterior a un feriado se cobra como sábado y el feriado como domingo, sin cargar nada más (alcanza con cargar el Feriado). \"Día que imita\" solo hace falta si ese día debe comportarse distinto a esa regla. Restaurante: un feriado atiende de 12 a 16; las vísperas no cambian su horario.",
       tipos: ["Feriado", "Vispera"],
       campos: [
         { name: "Fecha", label: "Fecha", type: "date", required: true },
         { name: "Tipo", label: "Tipo", type: "select", required: true, opciones: ["Feriado", "Vispera"] },
-        { name: "Dia_que_imita", label: "Día que imita", type: "select", opciones: DIAS },
+        { name: "Dia_que_imita", label: "Día que imita (opcional, solo si es distinto al automático)", type: "select", opciones: DIAS },
         { name: "Descripcion", label: "Descripción (opcional)", type: "text", placeholder: "Ej: Día de la Soberanía" }
       ]
     },
     {
       key: "agenda",
       titulo: "Agenda (menús especiales y eventos)",
-      ayuda: "El agente ofrece el menú o evento de esa fecha y cobra la seña por persona. Con \"Publicar en la web\" aparece en la agenda de granvadori.com.ar.",
+      ayuda: "El agente ofrece el menú o evento de esa fecha y cobra la seña por persona. Si tiene Hora, el restaurante toma reservas a esa hora aunque ese día o turno esté normalmente cerrado. No cambia las tarifas de suites. Con \"Publicar en la web\" aparece en la agenda de granvadori.com.ar.",
       tipos: ["menu", "menu unico"],
       campos: [
         { name: "Fecha", label: "Fecha", type: "date", required: true },
         { name: "Tipo", label: "Tipo", type: "select", required: true, opciones: ["menu", "menu unico"] },
         { name: "Titulo", label: "Título", type: "text", placeholder: "Ej: Mulata" },
-        { name: "Hora", label: "Hora", type: "text", placeholder: "Ej: 21:00" },
+        { name: "Hora", label: "Hora (en punto o y media)", type: "text", placeholder: "Ej: 21:00" },
         { name: "Precio", label: "Precio (web)", type: "text", placeholder: "Ej: $35000" },
         { name: "seña", label: "Seña por persona", type: "number", step: "1" },
-        { name: "Dia_que_imita", label: "Día que imita", type: "select", opciones: DIAS },
         { name: "Publicar_web", label: "Publicar en la web", type: "checkbox", default: false },
         { name: "Imagen", label: "Imagen (URL)", type: "text", placeholder: "https://granvadori.com.ar/img/eventos/..." },
         { name: "Descripcion", label: "Descripción", type: "textarea" }
