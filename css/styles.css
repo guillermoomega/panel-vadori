@@ -892,3 +892,12 @@ body {
 .jornal-form { flex-wrap: wrap; }
 .jornal-form .input-fecha { flex: 1 1 140px; min-width: 0; }
 .jornal-form .btn-walkin-confirmar { flex: 1 1 100%; }
+
+.form-aviso {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-radius: 6px;
+  padding: 6px 10px;
+}

@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icons/icon.svg" />
 <meta name="theme-color" content="#0f766e" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" />
-<link rel="stylesheet" href="css/styles.css?v=20261108a" />
+<link rel="stylesheet" href="css/styles.css?v=20261108b" />
 </head>
 <body>
 
@@ -39,6 +39,7 @@
     <button type="button" class="rango-tab area-tab-btn" data-seccion="cuenta-corriente">Cta. corriente</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="mpago">M.Pago</button>
     <button type="button" class="rango-tab area-tab-btn" data-seccion="proveedores">Proveedores</button>
+    <button type="button" class="rango-tab area-tab-btn" data-seccion="equipo">Equipo</button>
   </nav>
 
   <section id="view-hoy" class="view" hidden>
@@ -113,6 +114,11 @@
     <div id="proveedores-content"></div>
   </section>
 
+  <section id="view-equipo" class="view" hidden>
+    <div id="equipo-estado" class="estado-msg"></div>
+    <div id="equipo-content"></div>
+  </section>
+
   <section id="view-mas" class="view" hidden>
     <div class="empty-msg">Próximamente.</div>
   </section>
@@ -141,24 +147,25 @@
   </button>
 </nav>
 
-<script src="js/config.js?v=20261108a"></script>
-<script src="js/api.js?v=20261108a"></script>
-<script src="js/utils.js?v=20261108a"></script>
+<script src="js/config.js?v=20261108b"></script>
+<script src="js/api.js?v=20261108b"></script>
+<script src="js/utils.js?v=20261108b"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-<script src="js/views/hoy.js?v=20261108a"></script>
-<script src="js/views/limpieza.js?v=20261108a"></script>
-<script src="js/views/calendario.js?v=20261108a"></script>
-<script src="js/views/horas.js?v=20261108a"></script>
-<script src="js/views/checkins.js?v=20261108a"></script>
-<script src="js/views/caja.js?v=20261108a"></script>
-<script src="js/views/resumen_semanal.js?v=20261108a"></script>
-<script src="js/views/cuenta_corriente.js?v=20261108a"></script>
-<script src="js/views/mpago.js?v=20261108a"></script>
-<script src="js/views/reserva_crear.js?v=20261108a"></script>
-<script src="js/views/config_tarifas.js?v=20261108a"></script>
-<script src="js/views/config_feriados.js?v=20261108a"></script>
-<script src="js/views/reservas_mesa.js?v=20261108a"></script>
-<script src="js/views/proveedores.js?v=20261108a"></script>
-<script src="js/main.js?v=20261108a"></script>
+<script src="js/views/hoy.js?v=20261108b"></script>
+<script src="js/views/limpieza.js?v=20261108b"></script>
+<script src="js/views/calendario.js?v=20261108b"></script>
+<script src="js/views/horas.js?v=20261108b"></script>
+<script src="js/views/checkins.js?v=20261108b"></script>
+<script src="js/views/caja.js?v=20261108b"></script>
+<script src="js/views/resumen_semanal.js?v=20261108b"></script>
+<script src="js/views/cuenta_corriente.js?v=20261108b"></script>
+<script src="js/views/mpago.js?v=20261108b"></script>
+<script src="js/views/reserva_crear.js?v=20261108b"></script>
+<script src="js/views/config_tarifas.js?v=20261108b"></script>
+<script src="js/views/config_feriados.js?v=20261108b"></script>
+<script src="js/views/reservas_mesa.js?v=20261108b"></script>
+<script src="js/views/proveedores.js?v=20261108b"></script>
+  <script src="js/views/equipo.js?v=20261108b"></script>
+<script src="js/main.js?v=20261108b"></script>
 </body>
 </html>

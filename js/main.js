@@ -21,6 +21,7 @@
     "cuenta-corriente": { area: "administracion", section: document.getElementById("view-cuenta-corriente"), render: ViewCuentaCorriente.render, loaded: false },
     mpago:              { area: "administracion", section: document.getElementById("view-mpago"),            render: ViewMpago.render,           loaded: false },
     proveedores:        { area: "administracion", section: document.getElementById("view-proveedores"),      render: ViewProveedores.render,     loaded: false },
+    equipo:             { area: "administracion", section: document.getElementById("view-equipo"),           render: ViewEquipo.render,          loaded: false },
     configuracion:      { area: "suites",         section: document.getElementById("view-configuracion"),   render: ViewConfigTarifas.render,   loaded: false },
     mas:                { area: "mas",            section: document.getElementById("view-mas"),              render: null,                       loaded: true }
   };
