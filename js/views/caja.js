@@ -295,6 +295,7 @@ const ViewCaja = (() => {
           <div class="card-row"><div class="card-sub">Efectivo</div><div>${val(r.ventas_efectivo)}</div></div>
           <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.ventas_tarjeta)}</div></div>
           <div class="card-row"><div class="card-sub">Transferencia</div><div>${val(r.ventas_transferencia)}</div></div>
+          ${r.movimientos_total ? `<div class="card-row"><div class="card-sub">Movimientos de caja${r.movimientos_efectivo ? " (efectivo)" : ""}</div><div>${val(r.movimientos_efectivo || r.movimientos_total)}</div></div>` : ""}
           ${r.transferencias_mp_total && !r.transferencias_mp_en_ticket ? `<div class="card-row"><div class="card-sub">Transferencias MercadoPago imputadas</div><div>${val(r.transferencias_mp_total)}</div></div>` : ""}
           <div class="card-row"><div class="card-sub"><strong>Total ingresos</strong></div><div><strong>${val(totalIngresos(r))}</strong></div></div>
 
