@@ -118,6 +118,7 @@ const ViewResumenSemanal = (() => {
       <div class="section-title">Ingresos</div>
       ${fila("En efectivo", t.ingresos_efectivo)}
       ${fila("En tarjetas", t.ingresos_tarjeta)}
+      ${t.ingresos_qr ? fila("Por QR", t.ingresos_qr) : ""}
       ${fila("Total", t.ingresos_total, true)}
 
       <div class="section-title">Egresos</div>

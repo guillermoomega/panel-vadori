@@ -97,13 +97,14 @@ const ViewCaja = (() => {
     return `<span class="badge ${clase}">Diferencia caja ${Utils.formatMonto(diff)}${sufijo}</span>`;
   }
 
+  // Los gastos del arqueo (Egreso menos "Movimientos de caja" de egreso) se cruzan con los comprobantes.
   function badgeEgresosComprobantes(r) {
     const diff = r.diferencia_egresos_vs_comprobantes;
     const nivel = nivelDif(diff);
     if (nivel === "sindata") return `<span class="badge badge-neutral">Sin comprobantes para comparar</span>`;
-    if (nivel === "ok") return `<span class="badge badge-ok">Egresos coinciden con comprobantes</span>`;
+    if (nivel === "ok") return `<span class="badge badge-ok">Gastos coinciden con comprobantes</span>`;
     const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
-    return `<span class="badge ${clase}">Egresos vs comprobantes: diferencia ${Utils.formatMonto(diff)}</span>`;
+    return `<span class="badge ${clase}">Gastos vs comprobantes: diferencia ${Utils.formatMonto(diff)}</span>`;
   }
 
   // El monto inicial de una caja debería ser el efectivo contado (Total caja Usado) al cierre
@@ -142,33 +143,56 @@ const ViewCaja = (() => {
       </div>`;
   }
 
+  // Si el arqueo trae "Movimientos de caja" de egreso en efectivo, el depósito se compara contra
+  // ese retiro; si no, contra el efectivo contado (criterio anterior).
+  function hayDeposito(r) {
+    return !!r.depositos_efectivo || (r.movimientos_egreso_efectivo !== null && r.movimientos_egreso_efectivo !== undefined);
+  }
+
   function badgeDepositosEfectivo(r) {
-    if (!r.depositos_efectivo) return "";
+    if (!hayDeposito(r)) return "";
+    const contraRetiro = r.deposito_comparado_con === "movimiento";
     const diff = r.diferencia_deposito_vs_usado;
     const nivel = nivelDif(diff);
     if (nivel === "sindata") return `<span class="badge badge-neutral">Depósitos registrados, sin efectivo contado para comparar</span>`;
-    if (nivel === "ok") return `<span class="badge badge-ok">Depósito coincide con el efectivo contado</span>`;
+    if (contraRetiro && !r.depositos_efectivo) return `<span class="badge badge-diferencia">Retiro para depositar sin comprobante de depósito</span>`;
+    const contra = contraRetiro ? "el retiro del arqueo" : "el efectivo contado";
+    if (nivel === "ok") return `<span class="badge badge-ok">Depósito coincide con ${contra}</span>`;
     const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
-    return `<span class="badge ${clase}">Depósito vs. efectivo contado: diferencia ${Utils.formatMonto(diff)}</span>`;
+    return `<span class="badge ${clase}">Depósito vs. ${contra}: diferencia ${Utils.formatMonto(diff)}</span>`;
   }
 
   function filaDepositoEfectivo(r) {
-    if (!r.depositos_efectivo) return "";
+    if (!hayDeposito(r)) return "";
+    const contraRetiro = r.deposito_comparado_con === "movimiento";
     return `
+      ${contraRetiro ? `<div class="card-row"><div class="card-sub">Retiro para depositar (arqueo)</div><div>${val(r.movimientos_egreso_efectivo)}</div></div>` : ""}
       <div class="card-row">
         <div class="card-sub">Depósitos del turno</div>
-        <div>${val(r.depositos_efectivo)} · Dif vs. contado ${valDif(r.diferencia_deposito_vs_usado)}</div>
+        <div>${val(r.depositos_efectivo || 0)} · Dif vs. ${contraRetiro ? "retiro" : "contado"} ${valDif(r.diferencia_deposito_vs_usado)}</div>
       </div>`;
   }
 
+  function badgeNivel(diff, sinDatoTxt, okTxt, difTxt) {
+    const nivel = nivelDif(diff);
+    if (nivel === "sindata") return `<span class="badge badge-neutral">${sinDatoTxt}</span>`;
+    if (nivel === "ok") return `<span class="badge badge-ok">${okTxt}</span>`;
+    const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
+    return `<span class="badge ${clase}">${difTxt}: diferencia ${Utils.formatMonto(diff)}</span>`;
+  }
+
+  // Arqueos con línea QR propia: tarjeta del lote vs. tarjeta contada y QR del lote vs. QR contado,
+  // ambos descontando las propinas (vouchers que llegan junto al cierre de lote).
   function badgeTerminalVsUsado(r) {
     if (r.terminal_total === null || r.terminal_total === undefined) return "";
-    const diff = r.diferencia_terminal_vs_usado;
-    const nivel = nivelDif(diff);
-    if (nivel === "sindata") return `<span class="badge badge-neutral">Cierre de lote registrado, sin tarjeta contada para comparar</span>`;
-    if (nivel === "ok") return `<span class="badge badge-ok">Cierre de lote coincide con la tarjeta contada</span>`;
-    const clase = nivel === "mala" ? "badge-diferencia" : "badge-neutral";
-    return `<span class="badge ${clase}">Cierre de lote vs. tarjeta contada: diferencia ${Utils.formatMonto(diff)}</span>`;
+    if (!r.qr_en_ticket) {
+      return badgeNivel(r.diferencia_terminal_vs_usado, "Cierre de lote registrado, sin tarjeta contada para comparar",
+        "Cierre de lote coincide con la tarjeta contada", "Cierre de lote vs. tarjeta contada");
+    }
+    return badgeNivel(r.diferencia_terminal_vs_usado, "Cierre de lote sin tarjeta para comparar",
+        "Tarjeta del lote coincide con el arqueo", "Tarjeta del lote vs. arqueo")
+      + badgeNivel(r.diferencia_qr_terminal_vs_usado, "Cierre de lote sin QR para comparar",
+        "QR del lote coincide con el arqueo", "QR del lote vs. arqueo");
   }
 
   // Cierre de Lote de la terminal bancaria: fuente externa distinta tanto del ticket de Arqueo
@@ -178,14 +202,32 @@ const ViewCaja = (() => {
   // de Lote llama "transferencia" es en realidad lo cobrado por QR en la terminal — se muestra
   // como "QR" (antes decía "Transferencia/QR", cambiado a pedido del usuario 2026-10-12 para no
   // confundirla con las Transferencias MercadoPago, que son un ingreso aparte).
+  // Desde 2026-11-08 el arqueo trae la línea QR propia (qr_en_ticket): tarjeta y QR del lote se
+  // comparan cada uno contra su línea del arqueo, descontando las propinas de los vouchers.
   function terminalHtml(r) {
     const sinDatos = r.terminal_transferencia === null && r.terminal_tarjeta === null && r.terminal_total === null;
     if (sinDatos) return "";
-    return `
+    const propinas = (r.propinas || []).map(p => `
+      <div class="card-row" style="padding-left:16px;">
+        <div class="card-sub">↳ ${p.hora ? Utils.escapeHtml(String(p.hora).slice(0, 5)) : "—"} · ${p.medio === "qr" ? "QR" : "Tarjeta"}</div>
+        <div class="card-sub">${val(p.monto)}</div>
+      </div>`).join("");
+    const filaPropinas = (r.propinas_tarjeta || r.propinas_qr) ? `
+      <div class="card-row"><div class="card-sub">Propinas (vouchers)</div><div>Tarjeta ${val(r.propinas_tarjeta || 0)} · QR ${val(r.propinas_qr || 0)}</div></div>${propinas}` : "";
+    if (!r.qr_en_ticket) {
+      return `
       <div class="card-detail-label">Cierre de lote (terminal bancaria)</div>
       <div class="card-row"><div class="card-sub">QR</div><div>${val(r.terminal_transferencia)}</div></div>
       <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.terminal_tarjeta)}</div></div>
+      ${filaPropinas}
       <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)} · Dif vs. contado ${valDif(r.diferencia_terminal_vs_usado)}</div></div>`;
+    }
+    return `
+      <div class="card-detail-label">Cierre de lote (terminal bancaria)</div>
+      <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.terminal_tarjeta)} · Dif vs. arqueo ${valDif(r.diferencia_terminal_vs_usado)}</div></div>
+      <div class="card-row"><div class="card-sub">QR</div><div>${val(r.terminal_transferencia)} · Dif vs. arqueo ${valDif(r.diferencia_qr_terminal_vs_usado)}</div></div>
+      ${filaPropinas}
+      <div class="card-row"><div class="card-sub">Total</div><div>${val(r.terminal_total)}</div></div>`;
   }
 
   // Sueldos pagados desde el panel: una sub-fila por persona (nombre y monto).
@@ -295,14 +337,18 @@ const ViewCaja = (() => {
           <div class="card-row"><div class="card-sub">Efectivo</div><div>${val(r.ventas_efectivo)}</div></div>
           <div class="card-row"><div class="card-sub">Tarjeta</div><div>${val(r.ventas_tarjeta)}</div></div>
           <div class="card-row"><div class="card-sub">Transferencia</div><div>${val(r.ventas_transferencia)}</div></div>
+          ${r.ventas_qr !== null && r.ventas_qr !== undefined ? `<div class="card-row"><div class="card-sub">QR</div><div>${val(r.ventas_qr)}</div></div>` : ""}
           ${r.movimientos_total ? `<div class="card-row"><div class="card-sub">Movimientos de caja${r.movimientos_efectivo ? " (efectivo)" : ""}</div><div>${val(r.movimientos_efectivo || r.movimientos_total)}</div></div>` : ""}
           ${r.transferencias_mp_total && !r.transferencias_mp_en_ticket ? `<div class="card-row"><div class="card-sub">Transferencias MercadoPago imputadas</div><div>${val(r.transferencias_mp_total)}</div></div>` : ""}
           <div class="card-row"><div class="card-sub"><strong>Total ingresos</strong></div><div><strong>${val(totalIngresos(r))}</strong></div></div>
 
           <div class="card-detail-label">Egresos</div>
           <div class="card-row"><div class="card-sub"><strong>Total egresos</strong></div><div><strong>${val(r.egreso_total)}</strong></div></div>
+          ${r.movimientos_egreso_total ? `
+          <div class="card-row"><div class="card-sub">Gastos</div><div>${val(r.gastos_arqueo)}</div></div>
+          <div class="card-row"><div class="card-sub">Movimientos de caja (retiro para depositar)</div><div>${val(r.movimientos_egreso_total)}</div></div>` : ""}
           <div class="card-row"><div class="card-sub">Comprobantes cargados</div><div>${val(r.egresos_comprobantes)}</div></div>
-          <div class="card-row"><div class="card-sub">Diferencia vs. comprobantes</div><div>${valDif(r.diferencia_egresos_vs_comprobantes)}</div></div>
+          <div class="card-row"><div class="card-sub">Gastos vs. comprobantes</div><div>${valDif(r.diferencia_egresos_vs_comprobantes)}</div></div>
           <div class="card-row"><div class="card-sub">Resumen (saldo del turno)</div><div>${val(r.resumen)}</div></div>
 
           <div class="card-detail-label">Detalle de ingresos</div>
@@ -315,6 +361,7 @@ const ViewCaja = (() => {
           ${filaMedioPago("Efectivo", r.total_fuente_efectivo, r.total_usado_efectivo, r.diferencia_efectivo)}
           ${filaMedioPago("Tarjeta", r.total_fuente_tarjeta, r.total_usado_tarjeta, r.diferencia_tarjeta)}
           ${filaMedioPago("Transferencia", r.total_fuente_transferencia, r.total_usado_transferencia, r.diferencia_transferencia)}
+          ${r.qr_en_ticket ? filaMedioPago("QR", r.total_fuente_qr, r.total_usado_qr, r.diferencia_qr) : ""}
           ${filaTransferenciasMP(r)}
           <div class="card-row"><div class="card-sub">Total</div><div>Diferencia ${valDif(diferenciaCajaTotal)}</div></div>
           <div class="card-help-text">Diferencia positiva = sobra; negativa = falta.</div>
