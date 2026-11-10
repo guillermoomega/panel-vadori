@@ -116,6 +116,7 @@ const ViewEquipo = (() => {
     const item = editCategoriaId ? categorias.find(c => c.id === editCategoriaId) : null;
     const lista = categorias.length ? categorias.map(c => {
       const uso = [];
+      uso.push(c.Area ? (c.Area === "Salon" ? "Salón" : c.Area) : "sin área (sus jornales no aparecen al pagar)");
       uso.push(c.personas === 1 ? "1 persona" : `${c.personas} personas`);
       if (c.fichajes) uso.push(c.fichajes === 1 ? "1 jornal cargado" : `${c.fichajes} jornales cargados`);
       return `
@@ -140,7 +141,15 @@ const ViewEquipo = (() => {
         <div class="form-row">
           ${campoTexto("categoria-nombre", "Categoria", "Nombre de la categoría", item ? item.Categoria : "", { required: true, placeholder: "Ej: Cocina A" })}
           ${campoTexto("categoria-jornal", "Jornal_hora", "Jornal por hora ($)", item ? item.Jornal_hora : "", { type: "number", step: "1", min: 1, required: true })}
-          <div class="form-aviso">El jornal por hora se usa para calcular lo que cobra cada persona en Horas. Si lo cambiás, las horas se recalculan con el valor nuevo.</div>
+          <div class="form-field">
+            <label for="categoria-area">Área *</label>
+            <select id="categoria-area" name="Area" required>
+              <option value=""${item && item.Area ? "" : " selected"}></option>
+              <option value="Cocina"${item && item.Area === "Cocina" ? " selected" : ""}>Cocina</option>
+              <option value="Salon"${item && item.Area === "Salon" ? " selected" : ""}>Salón</option>
+            </select>
+          </div>
+          <div class="form-aviso">El jornal por hora se usa para calcular lo que cobra cada persona en Horas. Si lo cambiás, las horas se recalculan con el valor nuevo. El área define en qué área (Cocina o Salón) aparecen para pagar los jornales cargados con esta categoría.</div>
         </div>
         <div class="reserva-buscar-fila">
           <button type="submit" class="btn-crear-reserva">${item ? "Guardar cambios" : "Agregar categoría"}</button>
@@ -152,7 +161,8 @@ const ViewEquipo = (() => {
   async function guardarCategoria(form) {
     const datos = {
       Categoria: form.querySelector('[name="Categoria"]').value.trim(),
-      Jornal_hora: Number(form.querySelector('[name="Jornal_hora"]').value)
+      Jornal_hora: Number(form.querySelector('[name="Jornal_hora"]').value),
+      Area: form.querySelector('[name="Area"]').value
     };
     const repetida = categorias.find(c => c.id !== editCategoriaId && c.Categoria.trim().toLowerCase() === datos.Categoria.toLowerCase());
     if (repetida) {
