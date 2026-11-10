@@ -6,6 +6,7 @@ const ViewMpago = (() => {
   let ultimaData = null;
   let abiertos = new Set(); // payment_id con el panel de imputación desplegado
   let turnoSeleccionado = {}; // payment_id -> reportes_caja_id elegido
+  const TURNO_ACTUAL = "__turno_actual__"; // valor del select para "Imputar al turno actual abierto"
   let listenersAttached = false;
 
   function attachListeners() {
@@ -66,9 +67,12 @@ const ViewMpago = (() => {
     if (!t) return;
     const wrapper = btn.closest(".card-marcar-pagado");
     const select = wrapper.querySelector(".mp-select-turno");
-    const reportes_caja_id = select.value;
+    const turno_actual = select.value === TURNO_ACTUAL;
+    const reportes_caja_id = turno_actual ? "" : select.value;
     const turno = reportes_caja_id ? (ultimaData.turnos_disponibles || []).find(x => x.id === reportes_caja_id) : null;
-    const confirmMsg = reportes_caja_id
+    const confirmMsg = turno_actual
+      ? `Debe haber un turno abierto. Se imputa ${Utils.formatMonto(t.monto)} con la fecha y hora actual y se vincula al turno cuando se cargue su reporte de caja. ¿Continuar?`
+      : reportes_caja_id
       ? `¿Imputar ${Utils.formatMonto(t.monto)} (${Utils.fechaCortaConDia(t.fecha)}) como cobro en la caja de ${turno ? `${Utils.fechaCortaConDia(turno.fecha_apertura)} ${turno.hora_apertura || ""}` : "el turno seleccionado"}?`
       : `¿Imputar ${Utils.formatMonto(t.monto)} (${Utils.fechaCortaConDia(t.fecha)}) como cobro? Todavía no hay un turno de caja que cubra ese horario — se va a vincular solo cuando se cargue el cierre de ese turno.`;
     if (!confirm(confirmMsg)) {
@@ -85,7 +89,8 @@ const ViewMpago = (() => {
         hora: t.hora,
         monto: t.monto,
         descripcion: t.descripcion,
-        reportes_caja_id
+        reportes_caja_id,
+        turno_actual
       });
       if (!res.ok) throw new Error(res.error || "No se pudo imputar la transferencia.");
       abiertos.delete(id);
@@ -107,19 +112,17 @@ const ViewMpago = (() => {
   }
 
   function selectTurnoHtml(t, turnos) {
-    // Turno abierto más reciente (turnos viene ordenado de más nuevo a más viejo): va primero en la lista
-    const actual = turnos.find(tn => tn.abierta) || null;
-    const sugeridoId = t.turno_sugerido ? t.turno_sugerido.id : (actual ? actual.id : "");
+    // El turno en curso recién se conoce cuando se lee su ticket de caja: "turno actual" guarda la
+    // fecha y hora de ahora y el reporte de caja lo vincula después. Es la opción por defecto salvo
+    // que el sistema haya sugerido un turno ya cargado.
+    const sugeridoId = t.turno_sugerido ? t.turno_sugerido.id : TURNO_ACTUAL;
     const seleccionado = turnoSeleccionado.hasOwnProperty(t.payment_id) ? turnoSeleccionado[t.payment_id] : sugeridoId;
     const opcion = (id, texto) => `<option value="${Utils.escapeHtml(id)}"${id === seleccionado ? " selected" : ""}>${Utils.escapeHtml(texto)}</option>`;
-    const primera = actual
-      ? opcion(actual.id, `Imputar al turno actual abierto (${turnoLabel({ ...actual, abierta: false })})`)
-      : `<option value="" disabled>No hay turno abierto</option>`;
-    const opciones = turnos.filter(tn => tn !== actual).map(tn => opcion(tn.id, turnoLabel(tn))).join("");
+    const opciones = turnos.map(tn => opcion(tn.id, turnoLabel(tn))).join("");
     return `
       <select class="select-unidad mp-select-turno" data-id="${Utils.escapeHtml(t.payment_id)}">
-        ${primera}
-        <option value=""${seleccionado === "" ? " selected" : ""}>${actual ? "Elegir otro turno…" : "Elegir turno…"}</option>
+        ${opcion(TURNO_ACTUAL, "Imputar al turno actual abierto")}
+        ${opcion("", "Elegir otro turno…")}
         ${opciones}
       </select>`;
   }

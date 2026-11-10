@@ -72,8 +72,8 @@ const Api = (() => {
     cargarJornal: ({ nombre, categoria_id, horas, fecha }) => post("/horas/jornal", { nombre, categoria_id, horas, fecha }),
     borrarJornal: (id) => post("/horas/jornal/borrar", { id }),
     mpago: (rango) => get("/mpago", rango || {}),
-    imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id }) =>
-      post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id }),
+    imputarMpago: ({ payment_id, fecha, hora, monto, descripcion, reportes_caja_id, turno_actual }) =>
+      post("/mpago/imputar", { payment_id, fecha, hora, monto, descripcion, reportes_caja_id, turno_actual: !!turno_actual }),
     crearReserva: (datos) => post("/reserva/crear", datos),
     crearReservasMultiples: (datos) => post("/reserva/multiple", datos),
     paquetes: () => get("/paquetes"),
