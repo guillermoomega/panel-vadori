@@ -393,7 +393,7 @@ Las horas pagadas dejan de aparecer en el panel.`);
     return min ? `${hs} h ${min} min` : `${hs} h`;
   }
 
-  // Planilla de recibos del último pago: una por persona pagada, para imprimir, cortar y firmar
+  // Planilla de recibos del último pago: uno por persona pagada, 6 por hoja A4, para imprimir, cortar y firmar
   function imprimirRecibos() {
     if (!ultimoPago) return;
     const pagadas = (ultimoPago.personas || []).filter(p => !p.excluido && p.monto);
@@ -403,31 +403,26 @@ Las horas pagadas dejan de aparecer en el panel.`);
     const fechaPago = fechaCorta(ultimoPago.fecha);
     // El período termina a las 08:00 del día "hasta": el último día trabajado es el anterior
     const periodo = `${fechaCorta(ultimoPago.desde)} al ${fechaCorta(new Date(new Date(ultimoPago.hasta).getTime() - 864e5).toISOString())}`;
-    const area = ultimoPago.area === "Salon" ? "Salón" : (ultimoPago.area || "");
+    const area = ultimoPago.area === "Salon" ? "Salón" : (ultimoPago.area || ""); // solo en la barra de pantalla
     const e = Utils.escapeHtml;
     const recibo = (p, i) => {
       // Si la persona tuvo tramos con tarifas distintas, horas × tarifa no da el total: no se muestra un valor hora engañoso
       const tarifaUnica = p.tarifa && Math.abs(p.horas * p.tarifa - p.monto) < 1;
       return `
       <div class="recibo">
-        <div class="r-head">
-          <div><strong>GRAN VADORI</strong> · Recibo de sueldo</div>
-          <div>N° ${i + 1} / ${pagadas.length}</div>
-        </div>
         <div class="r-grid">
           <div><span>Nombre</span><b>${e(p.nombre)}</b></div>
-          <div><span>Fecha de pago</span><b>${fechaPago}</b></div>
-          <div><span>Período trabajado</span><b>${periodo}</b></div>
-          <div><span>Área</span><b>${e(area)}</b></div>
           <div><span>Horas</span><b>${horasRecibo(p.horas)}</b></div>
           <div><span>Valor hora</span><b>${tarifaUnica ? Utils.formatMonto(p.tarifa) : "según categoría"}</b></div>
+          <div><span>Período</span><b>${periodo}</b></div>
+          <div><span>Fecha de pago</span><b>${fechaPago}</b></div>
+          <div class="r-comp"><span>Comprobante</span><b>${e(ultimoPago.comprobante_id || "")}</b></div>
         </div>
-        <div class="r-total"><span>TOTAL</span><b>${Utils.formatMonto(p.monto)}</b></div>
         <div class="r-firma">
-          <div>Recibí conforme</div>
-          <div class="r-lineas"><div>Firma</div><div>Aclaración</div><div>DNI</div></div>
+          <div class="r-linea">Firma</div>
+          <div class="r-linea">Aclaración</div>
+          <div class="r-total"><span>TOTAL</span><b>${Utils.formatMonto(p.monto)}</b></div>
         </div>
-        <div class="r-pie">Comprobante ${e(ultimoPago.comprobante_id || "")}</div>
       </div>`;
     };
     const total = pagadas.reduce((s, p) => s + p.monto, 0);
@@ -438,19 +433,16 @@ Las horas pagadas dejan de aparecer en el panel.`);
   body { font-family: Arial, Helvetica, sans-serif; color: #000; margin: 0; font-size: 12px; }
   .barra { padding: 10px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #ccc; }
   .barra button { font-size: 14px; padding: 6px 14px; }
-  .recibo { border: 1.5px solid #000; padding: 8mm 9mm 5mm; height: 64mm; margin: 0 0 4mm; page-break-inside: avoid; break-inside: avoid; display: flex; flex-direction: column; }
-  .recibo + .recibo { position: relative; }
-  .recibo + .recibo::before { content: "✂"; position: absolute; top: -3.2mm; left: -4mm; font-size: 10px; color: #888; }
-  .r-head { display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; font-size: 13px; }
-  .r-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 8mm; }
-  .r-grid div, .r-total { display: flex; justify-content: space-between; gap: 4mm; border-bottom: 1px dotted #999; padding-bottom: 1mm; }
-  .r-grid span, .r-total span { color: #444; }
-  .r-total { margin-top: 3mm; font-size: 16px; border-bottom: 1.5px solid #000; }
-  .r-firma { margin-top: auto; display: flex; align-items: flex-end; gap: 6mm; }
-  .r-firma > div:first-child { white-space: nowrap; padding-bottom: 1mm; }
-  .r-lineas { flex: 1; display: grid; grid-template-columns: 1.3fr 1.3fr 1fr; gap: 6mm; }
-  .r-lineas div { border-top: 1px solid #000; padding-top: 1mm; text-align: center; font-size: 10px; color: #444; }
-  .r-pie { margin-top: 2mm; font-size: 9px; color: #777; text-align: right; }
+  .recibo { border: 1.5px solid #000; padding: 4mm 6mm 3mm; height: 42mm; margin: 0 0 3.5mm; page-break-inside: avoid; break-inside: avoid; display: flex; flex-direction: column; }
+  .r-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5mm 6mm; }
+  .r-grid div { display: flex; justify-content: space-between; gap: 3mm; border-bottom: 1px dotted #999; padding-bottom: 1mm; white-space: nowrap; }
+  .r-grid span { color: #444; }
+  .r-comp b { font-weight: normal; font-size: 9px; color: #666; }
+  .r-firma { margin-top: auto; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6mm; align-items: end; }
+  .r-linea { border-top: 1px solid #000; padding-top: 1mm; text-align: center; font-size: 10px; color: #444; }
+  .r-total { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid #000; padding-bottom: 1mm; }
+  .r-total span { color: #444; }
+  .r-total b { font-size: 16px; }
   @media print { .barra { display: none; } }
 </style></head><body>
 <div class="barra"><button onclick="window.print()">Imprimir</button><span>${pagadas.length} recibo(s) · Total ${Utils.formatMonto(total)}${area ? " · " + e(area) : ""}</span></div>
