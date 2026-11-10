@@ -347,7 +347,9 @@ Se eliminan su Entrada y su Salida.`);
     const excluidosTxt = excluidos.size ? `\n\nNo incluye a: ${[...excluidos].join(", ")}.` : "";
     const areaTxt = filtroArea ? `\nÁrea: ${filtroArea}.` : "";
     const proveedorTxt = filtroArea ? `Sueldos (${filtroArea})` : "sueldos";
-    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?${areaTxt}${excluidosTxt}\n\nSe va a generar un comprobante de gasto (${proveedorTxt}, Caja GV) que después se cruza con lo egresado en el turno.`);
+    const ok = window.confirm(`¿Confirmar el pago de ${monto} por el período ${desdeTxt} → ${hastaTxt}?${areaTxt}${excluidosTxt}\n\nSe va a generar un comprobante de gasto (${proveedorTxt}, Caja GV) que después se cruza con lo egresado en el turno.
+
+Las horas pagadas dejan de aparecer en el panel.`);
     if (!ok) return;
 
     pagando = true;
@@ -359,8 +361,13 @@ Se eliminan su Entrada y su Salida.`);
     try {
       const res = await Api.pagarHoras(rangoOverride, exclusionesEfectivas(ultimoData), filtroArea || null);
       if (!res.ok) throw new Error(res.error || "No se pudo registrar el pago.");
-      elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`;
-      if (btn) { btn.textContent = "✓ Pagado"; }
+      // Las horas pagadas ya no vienen del backend: se recarga para que desaparezcan
+      fichajesData = null;
+      fichajesVisibles = false;
+      await render();
+      elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`
+        + (res.marcar_error ? ` ${res.marcar_error}` : "");
+      if (res.marcar_error) elEstado().classList.add("error");
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
