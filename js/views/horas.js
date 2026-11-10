@@ -17,6 +17,8 @@ const ViewHoras = (() => {
   let guardandoJornal = false;
   let borrandoJornal = false;
 
+  let ultimoPago = null; // respuesta del último pago (para imprimir los recibos); se borra al cambiar de rango
+
   let excluidos = new Set(); // nombres excluidos del pago; se reinicia en cada carga de datos
   let filtroArea = ""; // "" = todas; se reinicia en cada carga de datos
 
@@ -65,6 +67,11 @@ const ViewHoras = (() => {
       const btnPagar = ev.target.closest("#horas-btn-pagar");
       if (btnPagar) {
         pagar();
+        return;
+      }
+      const btnRecibos = ev.target.closest("#horas-btn-recibos");
+      if (btnRecibos) {
+        imprimirRecibos();
         return;
       }
       const btnFichajes = ev.target.closest("#horas-btn-fichajes");
@@ -139,6 +146,7 @@ const ViewHoras = (() => {
   }
 
   function resetEstadoFichajes() {
+    ultimoPago = null;
     fichajesData = null;
     fichajesVisibles = false;
     editandoId = null;
@@ -364,6 +372,7 @@ Las horas pagadas dejan de aparecer en el panel.`);
       // Las horas pagadas ya no vienen del backend: se recarga para que desaparezcan
       fichajesData = null;
       fichajesVisibles = false;
+      ultimoPago = { ...res, area: filtroArea, fecha: new Date().toISOString() };
       await render();
       elEstado().textContent = `Pago de ${Utils.formatMonto(res.monto)} registrado (comprobante ${res.comprobante_id}).`
         + (res.marcar_error ? ` ${res.marcar_error}` : "");
@@ -375,6 +384,83 @@ Las horas pagadas dejan de aparecer en el panel.`);
     } finally {
       pagando = false;
     }
+  }
+
+  function horasRecibo(h) {
+    let hs = Math.floor(h);
+    let min = Math.round((h - hs) * 60);
+    if (min === 60) { hs += 1; min = 0; }
+    return min ? `${hs} h ${min} min` : `${hs} h`;
+  }
+
+  // Planilla de recibos del último pago: una por persona pagada, para imprimir, cortar y firmar
+  function imprimirRecibos() {
+    if (!ultimoPago) return;
+    const pagadas = (ultimoPago.personas || []).filter(p => !p.excluido && p.monto);
+    if (!pagadas.length) return;
+    const tz = "America/Argentina/Buenos_Aires";
+    const fechaCorta = (iso) => new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: tz });
+    const fechaPago = fechaCorta(ultimoPago.fecha);
+    // El período termina a las 08:00 del día "hasta": el último día trabajado es el anterior
+    const periodo = `${fechaCorta(ultimoPago.desde)} al ${fechaCorta(new Date(new Date(ultimoPago.hasta).getTime() - 864e5).toISOString())}`;
+    const area = ultimoPago.area === "Salon" ? "Salón" : (ultimoPago.area || "");
+    const e = Utils.escapeHtml;
+    const recibo = (p, i) => {
+      // Si la persona tuvo tramos con tarifas distintas, horas × tarifa no da el total: no se muestra un valor hora engañoso
+      const tarifaUnica = p.tarifa && Math.abs(p.horas * p.tarifa - p.monto) < 1;
+      return `
+      <div class="recibo">
+        <div class="r-head">
+          <div><strong>GRAN VADORI</strong> · Recibo de sueldo</div>
+          <div>N° ${i + 1} / ${pagadas.length}</div>
+        </div>
+        <div class="r-grid">
+          <div><span>Nombre</span><b>${e(p.nombre)}</b></div>
+          <div><span>Fecha de pago</span><b>${fechaPago}</b></div>
+          <div><span>Período trabajado</span><b>${periodo}</b></div>
+          <div><span>Área</span><b>${e(area)}</b></div>
+          <div><span>Horas</span><b>${horasRecibo(p.horas)}</b></div>
+          <div><span>Valor hora</span><b>${tarifaUnica ? Utils.formatMonto(p.tarifa) : "según categoría"}</b></div>
+        </div>
+        <div class="r-total"><span>TOTAL</span><b>${Utils.formatMonto(p.monto)}</b></div>
+        <div class="r-firma">
+          <div>Recibí conforme</div>
+          <div class="r-lineas"><div>Firma</div><div>Aclaración</div><div>DNI</div></div>
+        </div>
+        <div class="r-pie">Comprobante ${e(ultimoPago.comprobante_id || "")}</div>
+      </div>`;
+    };
+    const total = pagadas.reduce((s, p) => s + p.monto, 0);
+    const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Recibos de sueldo ${fechaPago}</title>
+<style>
+  @page { size: A4; margin: 10mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; margin: 0; font-size: 12px; }
+  .barra { padding: 10px; display: flex; gap: 12px; align-items: center; border-bottom: 1px solid #ccc; }
+  .barra button { font-size: 14px; padding: 6px 14px; }
+  .recibo { border: 1.5px solid #000; padding: 8mm 9mm 5mm; height: 64mm; margin: 0 0 4mm; page-break-inside: avoid; break-inside: avoid; display: flex; flex-direction: column; }
+  .recibo + .recibo { position: relative; }
+  .recibo + .recibo::before { content: "✂"; position: absolute; top: -3.2mm; left: -4mm; font-size: 10px; color: #888; }
+  .r-head { display: flex; justify-content: space-between; border-bottom: 1px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; font-size: 13px; }
+  .r-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 8mm; }
+  .r-grid div, .r-total { display: flex; justify-content: space-between; gap: 4mm; border-bottom: 1px dotted #999; padding-bottom: 1mm; }
+  .r-grid span, .r-total span { color: #444; }
+  .r-total { margin-top: 3mm; font-size: 16px; border-bottom: 1.5px solid #000; }
+  .r-firma { margin-top: auto; display: flex; align-items: flex-end; gap: 6mm; }
+  .r-firma > div:first-child { white-space: nowrap; padding-bottom: 1mm; }
+  .r-lineas { flex: 1; display: grid; grid-template-columns: 1.3fr 1.3fr 1fr; gap: 6mm; }
+  .r-lineas div { border-top: 1px solid #000; padding-top: 1mm; text-align: center; font-size: 10px; color: #444; }
+  .r-pie { margin-top: 2mm; font-size: 9px; color: #777; text-align: right; }
+  @media print { .barra { display: none; } }
+</style></head><body>
+<div class="barra"><button onclick="window.print()">Imprimir</button><span>${pagadas.length} recibo(s) · Total ${Utils.formatMonto(total)}${area ? " · " + e(area) : ""}</span></div>
+<div>${pagadas.map(recibo).join("")}</div>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) { alert("El navegador bloqueó la ventana de recibos. Permití las ventanas emergentes para el panel."); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
   }
 
   function cardPersona(p) {
@@ -518,6 +604,16 @@ Las horas pagadas dejan de aparecer en el panel.`);
         ${rangoOverride ? `<button type="button" id="horas-btn-reset" class="btn-link">Por defecto</button>` : ""}
       </div>
 
+      ${ultimoPago ? `
+      <div class="card card-row">
+        <div class="card-main">
+          <div class="card-title">Pago registrado: ${Utils.formatMonto(ultimoPago.monto)}</div>
+          <div class="card-sub">${(ultimoPago.personas || []).filter(p => !p.excluido && p.monto).length} persona(s)${ultimoPago.area ? ` · ${Utils.escapeHtml(ultimoPago.area === "Salon" ? "Salón" : ultimoPago.area)}` : ""}</div>
+        </div>
+        <div class="card-right">
+          <button type="button" id="horas-btn-recibos" class="btn-sumar">Imprimir recibos</button>
+        </div>
+      </div>` : ""}
       ${filtroAreaHtml(data)}
       <div class="section-title">Horas por persona</div>
       ${jornalSectionHtml(data)}
