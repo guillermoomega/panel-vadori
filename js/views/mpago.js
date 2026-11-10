@@ -107,12 +107,19 @@ const ViewMpago = (() => {
   }
 
   function selectTurnoHtml(t, turnos) {
-    const sugeridoId = t.turno_sugerido ? t.turno_sugerido.id : "";
+    // Turno abierto más reciente (turnos viene ordenado de más nuevo a más viejo): va primero en la lista
+    const actual = turnos.find(tn => tn.abierta) || null;
+    const sugeridoId = t.turno_sugerido ? t.turno_sugerido.id : (actual ? actual.id : "");
     const seleccionado = turnoSeleccionado.hasOwnProperty(t.payment_id) ? turnoSeleccionado[t.payment_id] : sugeridoId;
-    const opciones = turnos.map(tn => `<option value="${Utils.escapeHtml(tn.id)}"${tn.id === seleccionado ? " selected" : ""}>${Utils.escapeHtml(turnoLabel(tn))}</option>`).join("");
+    const opcion = (id, texto) => `<option value="${Utils.escapeHtml(id)}"${id === seleccionado ? " selected" : ""}>${Utils.escapeHtml(texto)}</option>`;
+    const primera = actual
+      ? opcion(actual.id, `Imputar al turno actual abierto (${turnoLabel({ ...actual, abierta: false })})`)
+      : `<option value="" disabled>No hay turno abierto</option>`;
+    const opciones = turnos.filter(tn => tn !== actual).map(tn => opcion(tn.id, turnoLabel(tn))).join("");
     return `
       <select class="select-unidad mp-select-turno" data-id="${Utils.escapeHtml(t.payment_id)}">
-        <option value="">Elegir turno…</option>
+        ${primera}
+        <option value=""${seleccionado === "" ? " selected" : ""}>${actual ? "Elegir otro turno…" : "Elegir turno…"}</option>
         ${opciones}
       </select>`;
   }
