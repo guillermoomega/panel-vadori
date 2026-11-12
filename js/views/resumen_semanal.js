@@ -61,7 +61,7 @@ const ViewResumenSemanal = (() => {
     return LABEL_CATEGORIA[categoria] || Utils.escapeHtml(categoria);
   }
 
-  // Porcentaje del renglón sobre el total de su sección (ingresos o egresos)
+  // Porcentaje del renglón sobre el total facturado (total de ingresos), tanto en ingresos como en egresos
   function pctHtml(monto, base) {
     if (!base) return "";
     const pct = (monto || 0) / base * 100;
@@ -106,7 +106,7 @@ const ViewResumenSemanal = (() => {
     const gananciaLabel = t.ganancia_perdida >= 0 ? "Ganancia" : "Pérdida";
 
     const egresosFilas = (t.egresos_por_categoria || []).length
-      ? t.egresos_por_categoria.map(c => filaCategoria(c, t.egresos_total)).join("")
+      ? t.egresos_por_categoria.map(c => filaCategoria(c, t.ingresos_total)).join("")
       : `<div class="empty-msg">Sin comprobantes pagados en este período.</div>`;
 
     elContent().innerHTML = `
