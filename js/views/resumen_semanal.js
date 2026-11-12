@@ -61,11 +61,18 @@ const ViewResumenSemanal = (() => {
     return LABEL_CATEGORIA[categoria] || Utils.escapeHtml(categoria);
   }
 
-  function fila(label, monto, totalRow) {
+  // Porcentaje del renglón sobre el total de su sección (ingresos o egresos)
+  function pctHtml(monto, base) {
+    if (!base) return "";
+    const pct = (monto || 0) / base * 100;
+    return `<span class="card-pct">${pct.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %</span>`;
+  }
+
+  function fila(label, monto, totalRow, base) {
     return `
       <div class="card card-row"${totalRow ? ' style="font-weight:600;"' : ""}>
         <div class="card-main"><div class="card-title">${label}</div></div>
-        <div class="card-right"><span class="card-hora">${Utils.formatMonto(monto)}</span></div>
+        <div class="card-right">${totalRow ? "" : pctHtml(monto, base)}<span class="card-hora">${Utils.formatMonto(monto)}</span></div>
       </div>`;
   }
 
@@ -80,14 +87,14 @@ const ViewResumenSemanal = (() => {
     return `<div class="card-detail-label">${label}</div><div>${valor}</div>${personas}`;
   }
 
-  function filaCategoria(c) {
+  function filaCategoria(c, base) {
     const detalle = (c.detalle || []).map(filaComprobante).join("");
     const abierto = categoriasAbiertas.has(c.categoria);
     return `
       <div class="card card-clickable" data-categoria="${Utils.escapeHtml(c.categoria)}">
         <div class="card-row">
           <div class="card-main"><div class="card-title">${labelCategoria(c.categoria)} <span class="card-info-icon">ⓘ</span></div></div>
-          <div class="card-right"><span class="card-hora">${Utils.formatMonto(c.monto)}</span></div>
+          <div class="card-right">${pctHtml(c.monto, base)}<span class="card-hora">${Utils.formatMonto(c.monto)}</span></div>
         </div>
         <div class="card-detail"${abierto ? "" : " hidden"}>${detalle}</div>
       </div>`;
@@ -99,7 +106,7 @@ const ViewResumenSemanal = (() => {
     const gananciaLabel = t.ganancia_perdida >= 0 ? "Ganancia" : "Pérdida";
 
     const egresosFilas = (t.egresos_por_categoria || []).length
-      ? t.egresos_por_categoria.map(filaCategoria).join("")
+      ? t.egresos_por_categoria.map(c => filaCategoria(c, t.egresos_total)).join("")
       : `<div class="empty-msg">Sin comprobantes pagados en este período.</div>`;
 
     elContent().innerHTML = `
@@ -116,9 +123,10 @@ const ViewResumenSemanal = (() => {
       </div>
 
       <div class="section-title">Ingresos</div>
-      ${fila("En efectivo", t.ingresos_efectivo)}
-      ${fila("En tarjetas", t.ingresos_tarjeta)}
-      ${t.ingresos_qr ? fila("Por QR", t.ingresos_qr) : ""}
+      ${fila("En efectivo", t.ingresos_efectivo, false, t.ingresos_total)}
+      ${fila("En tarjetas", t.ingresos_tarjeta, false, t.ingresos_total)}
+      ${t.ingresos_qr ? fila("Por QR", t.ingresos_qr, false, t.ingresos_total) : ""}
+      ${t.ingresos_transferencias_mp ? fila("Transferencias", t.ingresos_transferencias_mp, false, t.ingresos_total) : ""}
       ${fila("Total", t.ingresos_total, true)}
 
       <div class="section-title">Egresos</div>

@@ -365,6 +365,14 @@ body {
   font-size: 0.95rem;
 }
 
+.card-pct {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  min-width: 52px;
+  text-align: right;
+}
+
 .chk-pagar-label {
   flex-shrink: 0;
   display: flex;
