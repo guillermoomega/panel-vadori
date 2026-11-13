@@ -917,3 +917,5 @@ body {
 .cargar-resultado { white-space: pre-wrap; margin-bottom: 14px; padding: 12px 14px; }
 .cargar-resultado.error { color: var(--bad); }
 .cargar-usuario { margin-top: 12px; }
+.cargar-foto-botones { flex-wrap: wrap; gap: 8px; }
+.cargar-foto-botones .cargar-foto-btn { flex: 1 1 140px; }

@@ -69,7 +69,7 @@ const ViewCargar = (() => {
         tipo = ev.target.value;
         resultado = null;
         renderTodo();
-      } else if (ev.target.id === "cargar-foto") {
+      } else if (ev.target.classList.contains("cargar-foto-input")) {
         const file = ev.target.files && ev.target.files[0];
         if (!file) return;
         try {
@@ -79,6 +79,7 @@ const ViewCargar = (() => {
           foto = null;
           alert(err.message);
         }
+        ev.target.value = "";
         renderFoto();
       }
     });
@@ -176,19 +177,25 @@ const ViewCargar = (() => {
       <div class="form-aviso">Si el proveedor no está en la lista, primero agregalo en Administración → Proveedores.</div>`;
   }
 
+  // Dos botones: en Android el selector sin "capture" a veces solo ofrece la galería
+  function botonesFoto(textoCamara) {
+    return `
+      <label class="btn-secundario cargar-foto-btn" for="cargar-foto-camara">${textoCamara}</label>
+      <label class="btn-secundario cargar-foto-btn" for="cargar-foto-galeria">🖼 Elegir de la galería</label>
+      <input type="file" id="cargar-foto-camara" class="cargar-foto-input" accept="image/*" capture="environment" hidden>
+      <input type="file" id="cargar-foto-galeria" class="cargar-foto-input" accept="image/*" hidden>`;
+  }
+
   function fotoHtml() {
     if (!foto) {
-      return `
-        <label class="btn-secundario cargar-foto-btn" for="cargar-foto">📷 Sacar o elegir foto</label>
-        <input type="file" id="cargar-foto" accept="image/*" hidden>`;
+      return `<div class="reserva-buscar-fila cargar-foto-botones">${botonesFoto("📷 Sacar foto")}</div>`;
     }
     return `
       <img class="cargar-foto-preview" src="${foto.url}" alt="Foto del comprobante">
-      <div class="reserva-buscar-fila">
-        <label class="btn-secundario cargar-foto-btn" for="cargar-foto">Cambiar foto</label>
+      <div class="reserva-buscar-fila cargar-foto-botones">
+        ${botonesFoto("📷 Sacar otra")}
         <button type="button" class="btn-peligro" data-accion="quitar-foto">Quitar</button>
-      </div>
-      <input type="file" id="cargar-foto" accept="image/*" hidden>`;
+      </div>`;
   }
 
   function renderFoto() {
