@@ -64,6 +64,7 @@ const Api = (() => {
     pagarHoras: (rango, excluidos, area) => post("/horas/pagar", { ...(rango || {}), excluidos: excluidos || [], ...(area ? { area } : {}) }),
     caja: (rango) => get("/caja", rango || {}),
     cajaNota: (id, nota) => post("/caja/nota", { id, nota }),
+    cargarComprobante: (datos) => post("/comprobante/cargar", datos),
     cuentaCorriente: (rango) => get("/cuenta-corriente", rango || {}),
     marcarPagadoCC: (id, origen_pago) => post("/cuenta-corriente/pagar", { id, origen_pago }),
     fichajes: (rango) => get("/fichajes", rango || {}),

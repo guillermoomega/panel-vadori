@@ -205,7 +205,7 @@ const ViewEquipo = (() => {
 
   function personasFiltradas() {
     if (!filtro) return personas;
-    return personas.filter(p => `${p.Nombre} ${p.Telefono} ${nombreCategoria(p.Categoria)}`.toLowerCase().includes(filtro));
+    return personas.filter(p => `${p.Nombre} ${p.Telefono} ${p.Email || ""} ${nombreCategoria(p.Categoria)}`.toLowerCase().includes(filtro));
   }
 
   function personasHtml() {
@@ -214,6 +214,7 @@ const ViewEquipo = (() => {
     const lista = filtradas.length ? filtradas.map(p => {
       const sub = [];
       sub.push(p.Telefono || "sin teléfono (no puede fichar por WhatsApp)");
+      if (p.Email) sub.push(p.Email);
       if (p.Area.length) sub.push(p.Area.map(a => a === "Salon" ? "Salón" : a).join(", "));
       sub.push(nombreCategoria(p.Categoria) || "sin categoría (sus horas no tienen tarifa)");
       if (p.Rol.length) sub.push(p.Rol.join(", "));
@@ -247,12 +248,13 @@ const ViewEquipo = (() => {
         <div class="form-row">
           ${campoTexto("equipo-nombre", "Nombre", "Nombre", item ? item.Nombre : "", { required: true })}
           ${campoTexto("equipo-telefono", "Telefono", "Teléfono (WhatsApp)", item ? item.Telefono : "", { type: "tel", placeholder: "+5493547123456" })}
+          ${campoTexto("equipo-email", "Email", "Email del login del panel", item ? item.Email : "", { type: "email", placeholder: "nombre@gmail.com" })}
           ${campoCategoria(item ? item.Categoria : "")}
           ${campoSiNo("equipo-recibe-mensaje", "recibe_mensaje", "Recibe avisos del equipo", item ? item.recibe_mensaje : false)}
           ${campoSiNo("equipo-recibe-errores", "recibe_errores", "Recibe avisos de errores", item ? item.recibe_errores : false)}
           ${campoChecks("Area", "Áreas", AREAS, item ? item.Area : [])}
           ${campoChecks("Rol", "Roles", ROLES, item ? item.Rol : [])}
-          <div class="form-aviso">El teléfono tiene que ser exactamente el número de WhatsApp de la persona, con +549 adelante (ej: +5493547123456): con él se identifica al fichar entrada y salida.${item ? " Si cambiás el nombre, los fichajes anteriores quedan con el nombre viejo y no se suman a esta persona en Horas." : ""}</div>
+          <div class="form-aviso">El teléfono tiene que ser exactamente el número de WhatsApp de la persona, con +549 adelante (ej: +5493547123456): con él se identifica al fichar entrada y salida. El email es el mismo con el que la persona entra al panel: con él se sabe quién carga cada comprobante desde Administración → Cargar.${item ? " Si cambiás el nombre, los fichajes anteriores quedan con el nombre viejo y no se suman a esta persona en Horas." : ""}</div>
         </div>
         <div class="reserva-buscar-fila">
           <button type="submit" class="btn-crear-reserva">${item ? "Guardar cambios" : "Agregar persona"}</button>
@@ -265,6 +267,7 @@ const ViewEquipo = (() => {
     const datos = {
       Nombre: form.querySelector('[name="Nombre"]').value.trim(),
       Telefono: normTel(form.querySelector('[name="Telefono"]').value),
+      Email: form.querySelector('[name="Email"]').value.trim().toLowerCase(),
       Categoria: form.querySelector('[name="Categoria"]').value,
       Area: [...form.querySelectorAll('[name="Area"]:checked')].map(i => i.value),
       Rol: [...form.querySelectorAll('[name="Rol"]:checked')].map(i => i.value),
@@ -284,6 +287,11 @@ const ViewEquipo = (() => {
     const mismoTel = datos.Telefono && otros.find(p => normTel(p.Telefono) === datos.Telefono);
     if (mismoTel) {
       alert(`El teléfono ${datos.Telefono} ya lo tiene "${mismoTel.Nombre}". Cada persona necesita su propio número para fichar.`);
+      return;
+    }
+    const mismoEmail = datos.Email && otros.find(p => (p.Email || "").toLowerCase() === datos.Email);
+    if (mismoEmail) {
+      alert(`El email ${datos.Email} ya lo tiene "${mismoEmail.Nombre}".`);
       return;
     }
     const actual = editPersonaId ? personas.find(p => p.id === editPersonaId) : null;

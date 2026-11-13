@@ -909,3 +909,11 @@ body {
   border-radius: 6px;
   padding: 6px 10px;
 }
+
+/* Administración → Cargar: comprobantes desde el panel */
+.cargar-tipos { flex-direction: column; align-items: flex-start; gap: 8px; }
+.cargar-foto-btn { display: inline-block; text-align: center; }
+.cargar-foto-preview { display: block; max-width: 100%; max-height: 320px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; }
+.cargar-resultado { white-space: pre-wrap; margin-bottom: 14px; padding: 12px 14px; }
+.cargar-resultado.error { color: var(--bad); }
+.cargar-usuario { margin-top: 12px; }
