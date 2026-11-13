@@ -196,9 +196,15 @@ const ViewReservaCrear = (() => {
       : "";
     cont.innerHTML = titulo + visibles.map(r => `
       <button type="button" class="reserva-buscar-item" data-id="${Utils.escapeHtml(r.id)}">
-        <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad) || "—")} ·
+        <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(unidadLabel(r))} ·
         ${Utils.rangoFechas(r.checkin, r.checkout)} · ${Utils.escapeHtml(r.estado)}
       </button>`).join("");
+  }
+
+  // Si la reserva tiene unidad asignada se muestra su nombre; si no, el tipo (Suite Premium / Estándar)
+  function unidadLabel(r) {
+    const u = r.unidad_id && unidadesDisponibles.find(x => x.id === r.unidad_id);
+    return (u && u.nombre) || Utils.tipoUnidadLabel(r.tipo_unidad) || "—";
   }
 
   function cargarReservaParaEditar(id) {
