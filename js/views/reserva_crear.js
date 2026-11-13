@@ -7,6 +7,7 @@ const ViewReservaCrear = (() => {
   let paquetesDisponibles = [];
   let temporadasDisponibles = [];
   let resultadosBusqueda = [];
+  let listadoVigentes = false; // true = resultados del listado inicial (búsqueda vacía): reservas activas desde hoy
 
   let modoEdicion = false;
   let reservaEditId = null;
@@ -152,7 +153,8 @@ const ViewReservaCrear = (() => {
     const cont = document.getElementById("reserva-buscar-resultados");
     if (!input || !cont) return;
     const nombre = input.value.trim();
-    if (nombre.length < 2) {
+    // Sin texto: listado de reservas activas con salida desde hoy
+    if (nombre.length === 1) {
       cont.innerHTML = `<p class="reserva-buscar-msg">Ingresá al menos 2 caracteres.</p>`;
       return;
     }
@@ -161,6 +163,7 @@ const ViewReservaCrear = (() => {
       const res = await Api.buscarReservas(nombre);
       if (!res.ok) throw new Error(res.error || "No se pudo buscar.");
       resultadosBusqueda = res.reservas || [];
+      listadoVigentes = !nombre;
       renderResultados();
     } catch (err) {
       cont.innerHTML = `<p class="reserva-buscar-msg error">${Utils.escapeHtml(err.message)}</p>`;
@@ -177,7 +180,7 @@ const ViewReservaCrear = (() => {
     const filtroSel = document.getElementById("reserva-buscar-salida");
     if (!cont) return;
     if (!resultadosBusqueda.length) {
-      cont.innerHTML = `<p class="reserva-buscar-msg">Sin resultados.</p>`;
+      cont.innerHTML = `<p class="reserva-buscar-msg">${listadoVigentes ? "No hay reservas activas desde hoy." : "Sin resultados."}</p>`;
       return;
     }
     const soloVigentes = !filtroSel || filtroSel.value === "hoy";
@@ -188,7 +191,10 @@ const ViewReservaCrear = (() => {
       cont.innerHTML = `<p class="reserva-buscar-msg">Sin reservas con salida desde hoy (${ocultas} anterior${ocultas === 1 ? "" : "es"}: elegí "Todas" para verlas).</p>`;
       return;
     }
-    cont.innerHTML = visibles.map(r => `
+    const titulo = listadoVigentes
+      ? `<p class="reserva-buscar-msg">Reservas activas desde hoy (${visibles.length}). Escribí un nombre para buscar.</p>`
+      : "";
+    cont.innerHTML = titulo + visibles.map(r => `
       <button type="button" class="reserva-buscar-item" data-id="${Utils.escapeHtml(r.id)}">
         <strong>${Utils.escapeHtml(r.nombre)}</strong> — ${Utils.escapeHtml(Utils.tipoUnidadLabel(r.tipo_unidad) || "—")} ·
         ${Utils.rangoFechas(r.checkin, r.checkout)} · ${Utils.escapeHtml(r.estado)}
@@ -251,6 +257,8 @@ const ViewReservaCrear = (() => {
 
     const resultados = document.getElementById("reserva-buscar-resultados");
     if (resultados) resultados.innerHTML = "";
+    const inputBuscar = document.getElementById("reserva-buscar-nombre");
+    if (inputBuscar && !inputBuscar.value.trim()) handleBuscar();
   }
 
   async function handleSubmit(form) {
@@ -597,6 +605,7 @@ const ViewReservaCrear = (() => {
       elContent().innerHTML = formHtml();
       actualizarOpcionesUnidad();
       actualizarOpcionesPaquete();
+      handleBuscar(); // listado inicial: reservas activas desde hoy
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
