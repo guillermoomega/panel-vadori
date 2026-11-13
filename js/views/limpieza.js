@@ -4,9 +4,27 @@ const ViewLimpieza = (() => {
 
   const ESTADOS = ["Lista", "ocupada", "desocupada", "fuera de servicio"];
   let listenersAttached = false;
+  let reservasHoy = {}; // unidad_id -> { enCurso, llega, sale } (nombres), armado con las reservas activas asignadas
+
+  const hoyARG = () => new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  // Mismas reservas que el listado de Suites → Reservas (no canceladas, salida desde hoy), agrupadas por unidad
+  function armarReservasHoy(reservas) {
+    const hoy = hoyARG();
+    const mapa = {};
+    for (const r of reservas) {
+      if (!r.unidad_id || !r.checkin || !r.checkout || r.checkin > hoy || r.checkout < hoy) continue;
+      const m = mapa[r.unidad_id] || (mapa[r.unidad_id] = {});
+      if (r.checkout === hoy) m.sale = r.nombre;
+      else if (r.checkin === hoy) m.llega = r.nombre;
+      else m.enCurso = r.nombre;
+    }
+    return mapa;
+  }
 
   function textoEstado(u) {
-    if (u.estado === "ocupada" && u.huesped) return u.huesped;
+    const h = reservasHoy[u.id] || {};
+    if (u.estado === "ocupada") return h.enCurso || h.llega || u.huesped || u.estado;
     return u.estado || "\u2014";
   }
 
@@ -23,12 +41,23 @@ const ViewLimpieza = (() => {
     return "";
   }
 
+  // Movimientos del día según las reservas: quién sale y quién llega hoy a la unidad
+  function movimientosHoy(u) {
+    const h = reservasHoy[u.id] || {};
+    const partes = [];
+    if (h.sale) partes.push(`Sale hoy: ${Utils.escapeHtml(h.sale)}`);
+    if (h.llega) partes.push(`Llega hoy: ${Utils.escapeHtml(h.llega)}`);
+    if (h.enCurso && u.estado !== "ocupada") partes.push(`Reservada: ${Utils.escapeHtml(h.enCurso)}`);
+    return partes.length ? `<div class="unidad-mov">${partes.join("<br>")}</div>` : "";
+  }
+
   function cardUnidad(u) {
     return `
       <div class="unidad-card ${Utils.claseCardLimpieza(u.estado)}">
         <div>
           <div class="unidad-nombre">${Utils.escapeHtml(u.nombre || "\u2014")} ${iconoTermo(u)}</div>
           <div class="unidad-tipo">${Utils.escapeHtml(Utils.tipoUnidadLabel(u.tipo) || "")}</div>
+          ${movimientosHoy(u)}
         </div>
         <span class="badge ${Utils.badgeClaseLimpieza(u.estado)}">${Utils.escapeHtml(textoEstado(u))}</span>
         <div class="card-estado">
@@ -76,7 +105,11 @@ const ViewLimpieza = (() => {
     elEstado().classList.remove("error");
     elGrid().innerHTML = "";
     try {
-      const data = await Api.limpieza();
+      const [data, buscar] = await Promise.all([
+        Api.limpieza(),
+        Api.buscarReservas("").catch(() => ({ reservas: [] })) // si falla, la grilla se muestra igual sin los movimientos
+      ]);
+      reservasHoy = armarReservasHoy(buscar.reservas || []);
       elEstado().textContent = "";
       if (!data.unidades.length) {
         elGrid().innerHTML = `<div class="empty-msg">Sin unidades.</div>`;

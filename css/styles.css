@@ -522,6 +522,12 @@ body {
   text-transform: capitalize;
 }
 
+.unidad-mov {
+  font-size: 0.78rem;
+  color: var(--text);
+  margin-top: 4px;
+}
+
 .card-estado {
   display: flex;
   gap: 8px;
