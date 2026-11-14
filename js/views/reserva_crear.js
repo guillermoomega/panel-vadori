@@ -372,6 +372,7 @@ const ViewReservaCrear = (() => {
     const estado = form.querySelector("#multi-estado").value;
     const telefono = form.querySelector("#multi-telefono").value.trim();
     const observaciones = form.querySelector("#multi-observaciones").value.trim();
+    const sin_huespedes = form.querySelector("#multi-sin-huespedes").checked;
 
     if (!unidad_ids.length) { alert("Elegí al menos una unidad."); return; }
     if (!nombre || !checkin || !checkout) { alert("Completá nombre o motivo, ingreso y salida."); return; }
@@ -379,7 +380,8 @@ const ViewReservaCrear = (() => {
 
     const nombresUnidades = seleccion.map(cb => cb.dataset.nombre).join(", ");
     const resumen = `Nombre: ${nombre}\nUnidades (${unidad_ids.length}): ${nombresUnidades}\n` +
-      `Fechas: ${Utils.rangoFechas(checkin, checkout)}\nEstado: ${estado}`;
+      `Fechas: ${Utils.rangoFechas(checkin, checkout)}\nEstado: ${estado}` +
+      (sin_huespedes ? "\nSin huéspedes: el termo no se prende" : "");
     if (!confirm(`¿Confirmás crear ${unidad_ids.length === 1 ? "esta reserva" : `estas ${unidad_ids.length} reservas`}?\n\n${resumen}`)) return;
 
     const textoOriginal = btn.textContent;
@@ -389,7 +391,8 @@ const ViewReservaCrear = (() => {
       const res = await Api.crearReservasMultiples({
         unidad_ids, nombre, checkin, checkout, adultos, estado,
         telefono: telefono || undefined,
-        observaciones: observaciones || undefined
+        observaciones: observaciones || undefined,
+        sin_huespedes
       });
       const creadas = res.creadas || [];
       const omitidas = res.omitidas || [];
@@ -473,6 +476,10 @@ const ViewReservaCrear = (() => {
           <div class="form-field">
             <label for="multi-observaciones">Observaciones</label>
             <textarea id="multi-observaciones"></textarea>
+          </div>
+
+          <div class="form-field">
+            <label class="checkbox-inline"><input type="checkbox" id="multi-sin-huespedes"> Sin huéspedes (mantenimiento / uso propio): no prender el termo</label>
           </div>
 
           <button type="submit" class="btn-crear-reserva">Crear reservas</button>
