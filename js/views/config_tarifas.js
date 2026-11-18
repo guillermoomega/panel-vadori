@@ -10,6 +10,10 @@ const ViewConfigTarifas = (() => {
       selector: true,
       campos: [
         { name: "Pack", label: "Paquete", type: "text", required: true, placeholder: "Nombre del paquete" },
+        // Código interno: bot, panel y vouchers cruzan por acá, así el nombre se puede cambiar sin romper nada.
+        // Se elige al crear y no se edita después (el backend lo ignora en PATCH).
+        { name: "Codigo", label: "Código", type: "text", required: true, fijo: true, placeholder: "Ej: SAB-GOURMET",
+          pattern: "[A-Za-z0-9]+(-[A-Za-z0-9]+)*", title: "Solo letras, números y guiones. Ej: SAB-GOURMET" },
         { name: "tipo", label: "Tipo", type: "select", required: true, opciones: ["Voucher", "Alojamiento", "Adicional", "Menu"] },
         { name: "Estado", label: "Estado", type: "select", required: true, opciones: ["Activo", "Inactivo"], default: "Activo" },
         { name: "Suite", label: "Precio Suite Premium", type: "number", step: "0.01" },
@@ -170,13 +174,16 @@ const ViewConfigTarifas = (() => {
     }
     const val = valor !== undefined && valor !== null ? Utils.escapeHtml(valor) : "";
     const inputType = campo.type === "number" ? "number" : campo.type;
+    const soloLectura = campo.fijo && editando;
     return `
       <div class="form-field">
-        <label for="${id}">${campo.label}${campo.required ? " *" : ""}</label>
+        <label for="${id}">${campo.label}${campo.required && !soloLectura ? " *" : ""}${soloLectura ? " (no se puede cambiar)" : ""}</label>
         <input type="${inputType}" id="${id}" name="${campo.name}"
           ${campo.step ? `step="${campo.step}"` : ""}
           ${campo.placeholder ? `placeholder="${Utils.escapeHtml(campo.placeholder)}"` : ""}
-          value="${val}" ${campo.required ? "required" : ""}>
+          ${campo.pattern && !soloLectura ? `pattern="${Utils.escapeHtml(campo.pattern)}"` : ""}
+          ${campo.title ? `title="${Utils.escapeHtml(campo.title)}"` : ""}
+          value="${val}" ${soloLectura ? "readonly" : (campo.required ? "required" : "")}>
       </div>`;
   }
 
@@ -220,7 +227,7 @@ const ViewConfigTarifas = (() => {
     if (item.Cuarto !== undefined) precios.push(`Suite Estándar ${Utils.formatMonto(item.Cuarto)}`);
     return {
       titulo: `${item.Pack || "(sin nombre)"}${item.tipo ? " · " + item.tipo : ""}`,
-      sub: `${item.Estado || "-"}${precios.length ? " · " + precios.join(" · ") : ""}`
+      sub: `${item.Codigo ? "Código " + item.Codigo + " · " : "Sin código · "}${item.Estado || "-"}${precios.length ? " · " + precios.join(" · ") : ""}`
     };
   }
 
@@ -376,7 +383,7 @@ const ViewConfigTarifas = (() => {
         continue;
       }
       const input = form.querySelector(`[name="${c.name}"]`);
-      if (!input) continue;
+      if (!input || input.readOnly) continue;
       if (c.type === "checkbox") {
         out[c.name] = input.value === "true";
       } else if (c.type === "number") {
@@ -397,6 +404,14 @@ const ViewConfigTarifas = (() => {
     const tabla = form.dataset.tabla;
     const editId = editIds[tabla];
     const datosForm = leerFormulario(tabla, form);
+    if (!editId && datosForm.Codigo) {
+      datosForm.Codigo = datosForm.Codigo.toUpperCase();
+      // El backend también lo valida; esto solo evita el viaje cuando ya se sabe que está repetido.
+      if ((datos[tabla] || []).some(it => String(it.Codigo || "").toUpperCase() === datosForm.Codigo)) {
+        alert(`Ya existe un paquete con el código ${datosForm.Codigo}.`);
+        return;
+      }
+    }
     const btn = form.querySelector(".btn-crear-reserva");
     const textoOriginal = btn.textContent;
     btn.disabled = true;
