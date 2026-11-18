@@ -943,3 +943,13 @@ body {
 .cargar-usuario { margin-top: 12px; }
 .cargar-foto-botones { flex-wrap: wrap; gap: 8px; }
 .cargar-foto-botones .cargar-foto-btn { flex: 1 1 140px; }
+
+/* Administración → Cargar: últimos gastos cargados, con corrección */
+.cargar-reciente.abierto { border-color: var(--accent); }
+.cargar-reciente .card-row { align-items: flex-start; }
+.cargar-reciente .card-meta { text-align: left; margin-top: 4px; font-size: 0.8rem; color: var(--text-muted); }
+.cargar-reciente .card-right { flex-direction: column; align-items: flex-end; gap: 6px; }
+.cargar-reciente .card-right .card-sub { max-width: 160px; text-align: right; }
+.cargar-reciente .cargar-resultado { margin: 10px 0 0; }
+.cargar-editar-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.cargar-editar-form .reserva-buscar-fila { gap: 8px; flex-wrap: wrap; }
