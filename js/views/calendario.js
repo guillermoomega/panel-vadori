@@ -36,6 +36,29 @@ const ViewCalendario = (() => {
     });
   }
 
+  // Feriados de la tabla Feriados (Tipo "Feriado"): día pintado de fondo con la descripción
+  let feriados = null;
+  async function cargarFeriados() {
+    if (feriados) return feriados;
+    const res = await Api.configListar("feriados");
+    if (!res.ok) throw new Error(res.error || "No se pudieron cargar los feriados.");
+    feriados = (res.items || []).filter(f => f.Tipo === "Feriado" && f.Fecha);
+    return feriados;
+  }
+
+  function eventosDeFeriados(lista, desde, hasta) {
+    return lista
+      .filter(f => f.Fecha >= desde && f.Fecha <= hasta)
+      .map(f => ({
+        id: "feriado-" + f.id,
+        title: f.Descripcion || "Feriado",
+        start: f.Fecha,
+        allDay: true,
+        display: "background",
+        classNames: ["dia-feriado"]
+      }));
+  }
+
   async function cargarRango(info, successCallback, failureCallback) {
     const hoy = Utils.todayISO();
     const desdeSolicitado = toISO(info.start);
@@ -53,9 +76,12 @@ const ViewCalendario = (() => {
     elEstado().textContent = "Cargando…";
     elEstado().classList.remove("error");
     try {
-      const data = await Api.ocupacion(desde, hasta);
+      const [data, listaFeriados] = await Promise.all([
+        Api.ocupacion(desde, hasta),
+        cargarFeriados().catch(() => []) // si falla, el calendario se muestra igual sin feriados
+      ]);
       elEstado().textContent = "";
-      successCallback(eventosDeSuites(data.suites));
+      successCallback([...eventosDeFeriados(listaFeriados, desde, hasta), ...eventosDeSuites(data.suites)]);
     } catch (err) {
       elEstado().textContent = err.message;
       elEstado().classList.add("error");
@@ -80,6 +106,7 @@ const ViewCalendario = (() => {
   }
 
   function render() {
+    feriados = null; // releer por si se cargaron feriados nuevos
     init();
     calendar.refetchEvents();
   }

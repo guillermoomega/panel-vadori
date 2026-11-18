@@ -15,6 +15,8 @@
   --bad-bg: #fbe6e4;
   --neutral: #5b6167;
   --neutral-bg: #eceeec;
+  --feriado: #7c3aed;
+  --feriado-text: #5b21b6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,6 +37,8 @@
     --bad-bg: #3a1917;
     --neutral: #b7bcb8;
     --neutral-bg: #2a2d2e;
+    --feriado: #a78bfa;
+    --feriado-text: #c4b5fd;
   }
 }
 
@@ -666,6 +670,20 @@ body {
 .fc-event.estado-pendiente { background: var(--warn); }
 .fc-event.estado-cancelada { background: var(--neutral); text-decoration: line-through; }
 .fc-event.tipo-mesa { opacity: 0.85; }
+
+/* Feriados de la tabla Feriados: día de fondo violeta con el nombre */
+.fc .fc-bg-event.dia-feriado {
+  background: color-mix(in srgb, var(--feriado) 22%, transparent);
+  opacity: 1;
+  display: flex;
+  align-items: flex-end; /* el nombre abajo, para no pisar el número del día */
+}
+.fc .fc-bg-event.dia-feriado .fc-event-title {
+  color: var(--feriado-text);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 0.75rem;
+}
 
 /* --- Cuenta corriente --- */
 
