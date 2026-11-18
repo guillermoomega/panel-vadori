@@ -37,6 +37,7 @@ const ViewConfigTarifas = (() => {
       titulo: "Excepciones de fechas",
       ayuda: "Habilita o deshabilita este paquete durante un rango de fechas que contenga el ingreso de la consulta.",
       campos: [
+        { name: "Paquete", type: "hidden" },
         { name: "Pack", type: "hidden" },
         { name: "Fecha_desde", label: "Desde", type: "date", required: true },
         { name: "Fecha_hasta", label: "Hasta", type: "date", required: true },
@@ -272,8 +273,13 @@ const ViewConfigTarifas = (() => {
       </div>`;
   }
 
-  function excepcionesListaHtml(pack) {
-    const items = (datos.excepciones || []).filter(e => e.Pack === pack);
+  // Una excepción es del paquete por el vínculo Paquete (id de Tarifas); las viejas sin vínculo, por nombre.
+  function esExcepcionDe(e, tarifaItem) {
+    return Array.isArray(e.Paquete) ? e.Paquete.includes(tarifaItem.id) : e.Pack === tarifaItem.Pack;
+  }
+
+  function excepcionesListaHtml(tarifaItem) {
+    const items = (datos.excepciones || []).filter(e => esExcepcionDe(e, tarifaItem));
     if (!items.length) return `<div class="empty-msg">Sin excepciones cargadas para este paquete.</div>`;
     return items.map(item => {
       const disponible = item.Disponible ? "Disponible" : "No disponible";
@@ -293,10 +299,11 @@ const ViewConfigTarifas = (() => {
     }).join("");
   }
 
-  function excepcionesFormHtml(pack, item) {
+  function excepcionesFormHtml(tarifaItem, item) {
     const cfg = tablaConfig("excepciones");
     const editando = !!item;
-    const effectiveItem = item || { Pack: pack };
+    // Siempre manda el vínculo y el nombre actual (Pack es solo etiqueta); al editar una vieja, la vincula.
+    const effectiveItem = { ...(item || {}), Paquete: tarifaItem.id, Pack: tarifaItem.Pack };
     return `
       <form class="reserva-form config-form" data-tabla="excepciones">
         <div class="form-row">
@@ -312,13 +319,13 @@ const ViewConfigTarifas = (() => {
   function excepcionesSubseccionHtml(tarifaItem) {
     const cfg = tablaConfig("excepciones");
     const editId = editIds.excepciones;
-    const item = editId ? (datos.excepciones || []).find(i => i.id === editId && i.Pack === tarifaItem.Pack) : null;
+    const item = editId ? (datos.excepciones || []).find(i => i.id === editId && esExcepcionDe(i, tarifaItem)) : null;
     return `
       <div class="config-subseccion" data-tabla="excepciones">
         <div class="section-title">${cfg.titulo}</div>
         <p class="reserva-buscar-msg">${cfg.ayuda}</p>
-        <div class="config-lista">${excepcionesListaHtml(tarifaItem.Pack)}</div>
-        ${excepcionesFormHtml(tarifaItem.Pack, item)}
+        <div class="config-lista">${excepcionesListaHtml(tarifaItem)}</div>
+        ${excepcionesFormHtml(tarifaItem, item)}
       </div>`;
   }
 
