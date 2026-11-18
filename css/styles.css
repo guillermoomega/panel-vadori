@@ -953,3 +953,4 @@ body {
 .cargar-reciente .cargar-resultado { margin: 10px 0 0; }
 .cargar-editar-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .cargar-editar-form .reserva-buscar-fila { gap: 8px; flex-wrap: wrap; }
+.cargar-revisar { margin-top: 10px; font-size: 0.9rem; font-weight: 600; white-space: normal; }

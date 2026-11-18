@@ -198,16 +198,17 @@ const ViewCargar = (() => {
       body.email = await obtenerEmail();
       const res = await Api.cargarComprobante(body);
       if (!res.ok) throw new Error(res.error || "No se pudo procesar el comprobante.");
-      resultado = { ok: true, texto: res.respuesta };
+      // Los datos salen de leer la foto: siempre se pide revisarlos
+      resultado = { ok: true, texto: res.respuesta, aviso: "Revisá que los datos cargados sean correctos (fecha, monto, proveedor). Si algo está mal, avisá a administración." };
       foto = null;
       if (tipo === "gasto") {
         form.reset();
-        // El gasto recién cargado queda abierto abajo para revisar lo que se leyó de la foto
+        // El gasto recién cargado queda abierto abajo para corregirlo ahí mismo
         await cargarRecientes();
         if (res.comprobante_id && recientes.some(c => c.id === res.comprobante_id)) {
           editandoId = res.comprobante_id;
           mensajeEdicion = null;
-          resultado.texto += "\n\nRevisá los datos abajo, en Últimos cargados: si algo está mal, corregilo y guardá.";
+          resultado.aviso = "Revisá que los datos cargados sean correctos (fecha, monto, proveedor, cómo se pagó). Quedó abierto abajo, en Últimos cargados: si algo está mal, corregilo y tocá Guardar corrección.";
         }
       }
     } catch (err) {
@@ -282,7 +283,8 @@ const ViewCargar = (() => {
 
   function resultadoHtml() {
     if (!resultado) return "";
-    return `<div class="card cargar-resultado${resultado.ok ? "" : " error"}">${Utils.escapeHtml(resultado.texto || "")}</div>`;
+    const aviso = resultado.aviso ? `<div class="form-aviso cargar-revisar">⚠ ${Utils.escapeHtml(resultado.aviso)}</div>` : "";
+    return `<div class="card cargar-resultado${resultado.ok ? "" : " error"}">${Utils.escapeHtml(resultado.texto || "")}${aviso}</div>`;
   }
 
   function fechaDMA(iso) {
