@@ -44,6 +44,7 @@ const ViewReservaCrear = (() => {
       }
       if (ev.target.id === "reserva-tipo-unidad") {
         actualizarOpcionesUnidad();
+        actualizarOpcionesCama();
         actualizarOpcionesPaquete();
         completarCostoDesdePaquete();
       }
@@ -81,6 +82,23 @@ const ViewReservaCrear = (() => {
         handleBuscar();
       }
     });
+  }
+
+  // Matrimonial + Individual y 3 Individuales solo existen en Suite Premium (3ra persona)
+  const CAMAS = ["Matrimonial", "Individual"];
+  const CAMAS_PREMIUM = ["Matrimonial + Individual", "3 Individuales"];
+
+  function actualizarOpcionesCama(valorDeseado) {
+    const tipoSel = document.getElementById("reserva-tipo-unidad");
+    const camaSel = document.getElementById("reserva-tipo-cama");
+    if (!tipoSel || !camaSel) return;
+    const valor = (valorDeseado !== undefined ? valorDeseado : camaSel.value || "").trim();
+    const opciones = tipoSel.value === "suite" ? [...CAMAS, ...CAMAS_PREMIUM] : [...CAMAS];
+    // Un valor viejo cargado a mano se conserva para no perderlo al editar
+    if (valor && !opciones.includes(valor) && valorDeseado !== undefined) opciones.push(valor);
+    camaSel.innerHTML = `<option value="">Sin indicar</option>` +
+      opciones.map(o => `<option value="${Utils.escapeHtml(o)}">${Utils.escapeHtml(o)}</option>`).join("");
+    camaSel.value = opciones.includes(valor) ? valor : "";
   }
 
   function actualizarOpcionesUnidad() {
@@ -226,7 +244,7 @@ const ViewReservaCrear = (() => {
     form.querySelector("#reserva-adultos").value = reserva.adultos || 2;
     form.querySelector("#reserva-estado").value = reserva.estado || "Pendiente";
     form.querySelector("#reserva-telefono").value = reserva.telefono || "";
-    form.querySelector("#reserva-tipo-cama").value = reserva.tipo_cama || "";
+    actualizarOpcionesCama(reserva.tipo_cama || "");
     form.querySelector("#reserva-costo").value = reserva.costo != null ? reserva.costo : "";
     form.querySelector("#reserva-sena").value = reserva.monto_sena != null ? reserva.monto_sena : "";
     form.querySelector("#reserva-observaciones").value = reserva.observaciones || "";
@@ -259,6 +277,7 @@ const ViewReservaCrear = (() => {
       form.querySelector(".btn-crear-reserva").textContent = "Crear reserva";
       actualizarOpcionesUnidad();
       actualizarOpcionesPaquete();
+      actualizarOpcionesCama("");
     }
 
     const resultados = document.getElementById("reserva-buscar-resultados");
@@ -568,7 +587,13 @@ const ViewReservaCrear = (() => {
         <div class="form-row">
           <div class="form-field">
             <label for="reserva-tipo-cama">Tipo de cama</label>
-            <input type="text" id="reserva-tipo-cama" placeholder="Ej: matrimonial">
+            <select id="reserva-tipo-cama">
+              <option value="">Sin indicar</option>
+              <option value="Matrimonial">Matrimonial</option>
+              <option value="Individual">Individual</option>
+              <option value="Matrimonial + Individual">Matrimonial + Individual</option>
+              <option value="3 Individuales">3 Individuales</option>
+            </select>
           </div>
           <div class="form-field">
             <label for="reserva-paquete">Paquete</label>
