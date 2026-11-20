@@ -111,8 +111,17 @@ const Utils = (() => {
     return tipo.trim();
   }
 
+  // Cama de la reserva para la tarjeta: "Cama matrimonial", "Cama individual"; 3+ adultos = 3ra persona con cama adicional
+  function camaLabel(r) {
+    const partes = [];
+    const t = (r.tipo_cama || "").trim();
+    if (t) partes.push(/^cama/i.test(t) ? t : "Cama " + t.toLowerCase());
+    if (Number(r.adultos) >= 3 && !/adicional/i.test(t)) partes.push(partes.length ? "+ cama adicional" : "Cama adicional");
+    return partes.length ? partes.join(" ") : null;
+  }
+
   return {
-    todayISO, addDays, fechaLarga, fechaCorta, fechaAbrev, fechaCortaConDia, rangoFechas,
+    todayISO, addDays, fechaLarga, fechaCorta, fechaAbrev, fechaCortaConDia, rangoFechas, camaLabel,
     estadoReservaSuite, badgeClaseReserva,
     badgeClaseLimpieza, claseCardLimpieza,
     escapeHtml, formatMonto, tipoUnidadLabel

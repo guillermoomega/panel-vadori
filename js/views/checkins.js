@@ -109,6 +109,8 @@ const ViewCheckins = (() => {
     const subPartes = [unidad];
     if (r.tipo_unidad) subPartes.push(Utils.tipoUnidadLabel(r.tipo_unidad));
     if (r.adultos) subPartes.push(`${r.adultos} ad.`);
+    const cama = Utils.camaLabel(r);
+    if (cama) subPartes.push(cama);
     if (r.paquete) subPartes.push(r.paquete);
     const sub = subPartes.map(Utils.escapeHtml).join(" · ");
 
