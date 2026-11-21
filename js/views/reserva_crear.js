@@ -42,6 +42,11 @@ const ViewReservaCrear = (() => {
         if (todas) todas.checked = cbs.every(cb => cb.checked);
         return;
       }
+      if (ev.target.id === "multi-sin-huespedes") {
+        const campo = document.getElementById("multi-paquete-campo");
+        if (campo) campo.hidden = ev.target.checked;
+        return;
+      }
       if (ev.target.id === "reserva-tipo-unidad") {
         actualizarOpcionesUnidad();
         actualizarOpcionesCama();
@@ -149,9 +154,15 @@ const ViewReservaCrear = (() => {
     if (paqueteActual && !opciones.some(o => o.nombre === paqueteActual)) {
       opciones.unshift({ nombre: paqueteActual, etiqueta: `${paqueteActual} (inactivo)` });
     }
-    paqueteSel.innerHTML = `<option value="">Sin paquete</option>` +
+    paqueteSel.innerHTML = `<option value="" disabled selected>Elegí un paquete…</option>` +
       opciones.map(o => `<option value="${Utils.escapeHtml(o.nombre)}">${Utils.escapeHtml(o.etiqueta)}</option>`).join("");
     if (opciones.some(o => o.nombre === valorPrevio)) paqueteSel.value = valorPrevio;
+  }
+
+  // Selector de paquete del formulario múltiple: cada unidad lleva el mismo paquete.
+  function opcionesPaqueteMultiple() {
+    return `<option value="" disabled selected>Elegí un paquete…</option>` +
+      paquetesDisponibles.map(p => `<option value="${Utils.escapeHtml(p.nombre)}">${Utils.escapeHtml(p.nombre)}</option>`).join("");
   }
 
   // Solo al elegir paquete o cambiar el tipo: el costo sigue siendo editable a mano después.
@@ -317,6 +328,12 @@ const ViewReservaCrear = (() => {
       alert("La salida debe ser posterior al ingreso.");
       return;
     }
+    // Toda reserva lleva paquete; solo se puede guardar sin paquete al cancelar o en un bloqueo sin huéspedes.
+    const exentoPaquete = editando && (estado === "Cancelada" || /^\[sin huéspedes\]/i.test(observaciones));
+    if (!paquete && !exentoPaquete) {
+      alert("Elegí un paquete de la lista.");
+      return;
+    }
 
     const unidadTexto = unidad_id ? unidadSel.options[unidadSel.selectedIndex].textContent : "sin asignar";
     const resumen = `Huésped: ${nombre}\n` +
@@ -347,7 +364,8 @@ const ViewReservaCrear = (() => {
         res = await Api.editarReserva({
           ...datosBase,
           reserva_id: reservaEditId,
-          unidad_id_anterior: unidadIdAnterior || ""
+          unidad_id_anterior: unidadIdAnterior || "",
+          paquete_anterior: paqueteActual || ""
         });
       } else {
         res = await Api.crearReserva(datosBase);
@@ -392,14 +410,17 @@ const ViewReservaCrear = (() => {
     const telefono = form.querySelector("#multi-telefono").value.trim();
     const observaciones = form.querySelector("#multi-observaciones").value.trim();
     const sin_huespedes = form.querySelector("#multi-sin-huespedes").checked;
+    const paquete = sin_huespedes ? "" : form.querySelector("#multi-paquete").value.trim();
 
     if (!unidad_ids.length) { alert("Elegí al menos una unidad."); return; }
     if (!nombre || !checkin || !checkout) { alert("Completá nombre o motivo, ingreso y salida."); return; }
     if (checkout <= checkin) { alert("La salida debe ser posterior al ingreso."); return; }
+    if (!sin_huespedes && !paquete) { alert("Elegí un paquete (o tildá \"Sin huéspedes\" si es un bloqueo)."); return; }
 
     const nombresUnidades = seleccion.map(cb => cb.dataset.nombre).join(", ");
     const resumen = `Nombre: ${nombre}\nUnidades (${unidad_ids.length}): ${nombresUnidades}\n` +
       `Fechas: ${Utils.rangoFechas(checkin, checkout)}\nEstado: ${estado}` +
+      (paquete ? `\nPaquete: ${paquete}` : "") +
       (sin_huespedes ? "\nSin huéspedes: el termo no se prende" : "");
     if (!confirm(`¿Confirmás crear ${unidad_ids.length === 1 ? "esta reserva" : `estas ${unidad_ids.length} reservas`}?\n\n${resumen}`)) return;
 
@@ -411,6 +432,7 @@ const ViewReservaCrear = (() => {
         unidad_ids, nombre, checkin, checkout, adultos, estado,
         telefono: telefono || undefined,
         observaciones: observaciones || undefined,
+        paquete: paquete || undefined,
         sin_huespedes
       });
       const creadas = res.creadas || [];
@@ -424,6 +446,8 @@ const ViewReservaCrear = (() => {
       alert(msg);
       if (res.ok) {
         form.reset();
+        const campoPaquete = form.querySelector("#multi-paquete-campo");
+        if (campoPaquete) campoPaquete.hidden = false;
         form.closest("details").open = false;
       }
     } catch (err) {
@@ -499,6 +523,11 @@ const ViewReservaCrear = (() => {
 
           <div class="form-field">
             <label class="checkbox-inline"><input type="checkbox" id="multi-sin-huespedes"> Sin huéspedes (mantenimiento / uso propio): no prender el termo</label>
+          </div>
+
+          <div class="form-field" id="multi-paquete-campo">
+            <label for="multi-paquete">Paquete * (el mismo para cada unidad)</label>
+            <select id="multi-paquete">${opcionesPaqueteMultiple()}</select>
           </div>
 
           <button type="submit" class="btn-crear-reserva">Crear reservas</button>
@@ -596,9 +625,9 @@ const ViewReservaCrear = (() => {
             </select>
           </div>
           <div class="form-field">
-            <label for="reserva-paquete">Paquete</label>
+            <label for="reserva-paquete">Paquete *</label>
             <select id="reserva-paquete">
-              <option value="">Sin paquete</option>
+              <option value="" disabled selected>Elegí un paquete…</option>
             </select>
           </div>
         </div>
