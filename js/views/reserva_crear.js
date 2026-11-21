@@ -265,6 +265,7 @@ const ViewReservaCrear = (() => {
 
     document.getElementById("reserva-edicion-nombre").textContent = reserva.nombre;
     document.getElementById("reserva-edicion-banner").hidden = false;
+    document.getElementById("reserva-form-titulo").textContent = "Editar reserva";
     form.querySelector(".btn-crear-reserva").textContent = "Guardar cambios";
 
     document.getElementById("reserva-buscar-resultados").innerHTML = "";
@@ -286,6 +287,8 @@ const ViewReservaCrear = (() => {
     if (form) {
       form.reset();
       form.querySelector(".btn-crear-reserva").textContent = "Crear reserva";
+      const titulo = document.getElementById("reserva-form-titulo");
+      if (titulo) titulo.textContent = "Nueva reserva";
       actualizarOpcionesUnidad();
       actualizarOpcionesPaquete();
       actualizarOpcionesCama("");
@@ -554,6 +557,8 @@ const ViewReservaCrear = (() => {
         </div>
         <div id="reserva-buscar-resultados" class="reserva-buscar-resultados"></div>
       </div>
+
+      <h2 id="reserva-form-titulo" class="reserva-form-titulo">Nueva reserva</h2>
 
       <div id="reserva-edicion-banner" class="reserva-edicion-banner" hidden>
         <span>Editando la reserva de <strong id="reserva-edicion-nombre"></strong></span>
