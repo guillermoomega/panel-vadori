@@ -145,24 +145,30 @@ const ViewReservaCrear = (() => {
     if (!tipoSel || !paqueteSel) return;
     const tipo = tipoSel.value;
     const temporada = temporadaIngreso();
-    const valorPrevio = paqueteSel.value || paqueteActual || "";
+    // El valor de cada opción es el código del paquete; la reserva guarda el nombre, así que el actual se busca por nombre.
     const opciones = paquetesDisponibles.map(p => {
       const precio = precioPaquete(p, tipo, temporada);
       const etiqueta = precio ? `${p.nombre} — ${Utils.formatMonto(precio)} (temp. ${temporada})` : p.nombre;
-      return { nombre: p.nombre, etiqueta };
+      return { valor: valorPaquete(p), nombre: p.nombre, etiqueta };
     });
-    if (paqueteActual && !opciones.some(o => o.nombre === paqueteActual)) {
-      opciones.unshift({ nombre: paqueteActual, etiqueta: `${paqueteActual} (inactivo)` });
+    const actual = paqueteActual ? opciones.find(o => o.nombre === paqueteActual) : null;
+    if (paqueteActual && !actual) {
+      opciones.unshift({ valor: paqueteActual, nombre: paqueteActual, etiqueta: `${paqueteActual} (inactivo)` });
     }
+    const valorPrevio = paqueteSel.value || (actual ? actual.valor : paqueteActual) || "";
     paqueteSel.innerHTML = `<option value="" disabled selected>Elegí un paquete…</option>` +
-      opciones.map(o => `<option value="${Utils.escapeHtml(o.nombre)}">${Utils.escapeHtml(o.etiqueta)}</option>`).join("");
-    if (opciones.some(o => o.nombre === valorPrevio)) paqueteSel.value = valorPrevio;
+      opciones.map(o => `<option value="${Utils.escapeHtml(o.valor)}">${Utils.escapeHtml(o.etiqueta)}</option>`).join("");
+    if (opciones.some(o => o.valor === valorPrevio)) paqueteSel.value = valorPrevio;
+  }
+
+  function valorPaquete(p) {
+    return p.codigo || p.nombre;
   }
 
   // Selector de paquete del formulario múltiple: cada unidad lleva el mismo paquete.
   function opcionesPaqueteMultiple() {
     return `<option value="" disabled selected>Elegí un paquete…</option>` +
-      paquetesDisponibles.map(p => `<option value="${Utils.escapeHtml(p.nombre)}">${Utils.escapeHtml(p.nombre)}</option>`).join("");
+      paquetesDisponibles.map(p => `<option value="${Utils.escapeHtml(valorPaquete(p))}">${Utils.escapeHtml(p.nombre)}</option>`).join("");
   }
 
   // Solo al elegir paquete o cambiar el tipo: el costo sigue siendo editable a mano después.
@@ -171,7 +177,7 @@ const ViewReservaCrear = (() => {
     const paqueteSel = document.getElementById("reserva-paquete");
     const costoInput = document.getElementById("reserva-costo");
     if (!tipoSel || !paqueteSel || !costoInput || !paqueteSel.value) return;
-    const p = paquetesDisponibles.find(x => x.nombre === paqueteSel.value);
+    const p = paquetesDisponibles.find(x => valorPaquete(x) === paqueteSel.value);
     if (!p) return;
     const precio = precioPaquete(p, tipoSel.value, temporadaIngreso());
     if (precio) costoInput.value = precio;
@@ -423,7 +429,7 @@ const ViewReservaCrear = (() => {
     const nombresUnidades = seleccion.map(cb => cb.dataset.nombre).join(", ");
     const resumen = `Nombre: ${nombre}\nUnidades (${unidad_ids.length}): ${nombresUnidades}\n` +
       `Fechas: ${Utils.rangoFechas(checkin, checkout)}\nEstado: ${estado}` +
-      (paquete ? `\nPaquete: ${paquete}` : "") +
+      (paquete ? `\nPaquete: ${form.querySelector("#multi-paquete").selectedOptions[0].textContent}` : "") +
       (sin_huespedes ? "\nSin huéspedes: el termo no se prende" : "");
     if (!confirm(`¿Confirmás crear ${unidad_ids.length === 1 ? "esta reserva" : `estas ${unidad_ids.length} reservas`}?\n\n${resumen}`)) return;
 
