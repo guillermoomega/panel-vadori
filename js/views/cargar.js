@@ -27,6 +27,35 @@ const ViewCargar = (() => {
   // Gastos cargados en los últimos 7 días, para corregir lo que se leyó mal
   const CATEGORIAS = ["insumos cocina", "insumos suites", "bebidas", "limpieza", "mantenimiento", "servicios", "sueldos cocina", "sueldos salon", "otros"];
   const MEDIOS = { gv: "Caja GV", go: "Caja GO", cc: "Cuenta corriente" };
+
+  // Monto escrito a mano: "161.974", "161,974", "$ 161.974,50" o "1234.5". Un separador seguido
+  // de grupos de exactamente 3 dígitos es de miles; si están los dos, el último es el decimal.
+  // Vacío → null; ilegible → NaN.
+  function leerMonto(texto) {
+    let t = String(texto || "").replace(/[$\s]/g, "");
+    if (!t) return null;
+    if (!/^[0-9.,]+$/.test(t)) return NaN;
+    const ultPunto = t.lastIndexOf("."), ultComa = t.lastIndexOf(",");
+    if (ultPunto >= 0 && ultComa >= 0) {
+      const dec = ultPunto > ultComa ? "." : ",";
+      const miles = dec === "." ? "," : ".";
+      t = t.split(miles).join("").replace(dec, ".");
+    } else {
+      const sep = ultPunto >= 0 ? "." : ultComa >= 0 ? "," : null;
+      if (sep) {
+        const grupos = sep === "." ? /^\d{1,3}(\.\d{3})+$/ : /^\d{1,3}(,\d{3})+$/;
+        t = grupos.test(t) ? t.split(sep).join("") : (t.split(sep).length === 2 ? t.replace(sep, ".") : "x");
+      }
+    }
+    const n = Number(t);
+    return isNaN(n) ? NaN : Math.round(n * 100) / 100;
+  }
+
+  function vistaMonto(texto) {
+    const n = leerMonto(texto);
+    if (n === null) return "";
+    return isNaN(n) ? "No se entiende el monto" : "Se guarda: " + Utils.formatMonto(n);
+  }
   let recientes = [];
   let recientesError = null;
   let editandoId = null;
@@ -92,6 +121,12 @@ const ViewCargar = (() => {
       }
     });
 
+    elContent().addEventListener("input", (ev) => {
+      if (ev.target.name !== "monto") return;
+      const vista = ev.target.closest(".form-field").querySelector(".cargar-monto-vista");
+      if (vista) vista.textContent = vistaMonto(ev.target.value);
+    });
+
     elContent().addEventListener("click", (ev) => {
       if (ev.target.closest("[data-accion='quitar-foto']")) {
         foto = null;
@@ -148,7 +183,10 @@ const ViewCargar = (() => {
     };
     if (!datos.fecha) return alert("Poné la fecha del comprobante.");
     if (!datos.proveedor_id) return alert("Elegí el proveedor.");
-    if (!(Number(datos.monto) > 0)) return alert("El monto tiene que ser mayor a cero.");
+    const monto = leerMonto(datos.monto);
+    if (Number.isNaN(monto)) return alert("No se entiende el monto. Escribilo así: 161.974 o 161974,50");
+    if (!(monto > 0)) return alert("El monto tiene que ser mayor a cero.");
+    datos.monto = String(monto);
 
     const btn = form.querySelector("[type='submit']");
     btn.disabled = true;
@@ -182,6 +220,9 @@ const ViewCargar = (() => {
       Object.assign(body, datosGasto(form));
       if (!body.proveedor) return alert("Elegí el proveedor.");
       if (!body.medio) return alert("Elegí cómo se pagó.");
+      const monto = leerMonto(body.monto);
+      if (Number.isNaN(monto)) return alert("No se entiende el monto. Escribilo así: 161.974 o 161974,50");
+      body.monto = monto === null ? "" : String(monto);
       if (!foto && !body.monto) return alert("Sin foto hay que poner el monto.");
     } else if (!foto) {
       return alert("Falta la foto.");
@@ -233,7 +274,8 @@ const ViewCargar = (() => {
       </div>
       <div class="form-field">
         <label for="cargar-monto">Monto ($)</label>
-        <input type="number" id="cargar-monto" name="monto" step="0.01" min="0" placeholder="Si hay foto, se lee de la foto">
+        <input type="text" inputmode="decimal" autocomplete="off" id="cargar-monto" name="monto" placeholder="Si hay foto, se lee de la foto">
+        <div class="card-sub cargar-monto-vista" aria-live="polite"></div>
       </div>
       <div class="form-field">
         <label for="cargar-medio">Cómo se pagó *</label>
@@ -327,7 +369,8 @@ const ViewCargar = (() => {
           </div>
           <div class="form-field">
             <label>Monto ($) *</label>
-            <input type="number" name="monto" step="0.01" min="0" value="${c.monto ?? ""}" required>
+            <input type="text" inputmode="decimal" autocomplete="off" name="monto" value="${c.monto ?? ""}" required>
+            <div class="card-sub cargar-monto-vista" aria-live="polite">${c.monto != null ? vistaMonto(c.monto) : ""}</div>
           </div>
           <div class="form-field">
             <label>Categoría</label>
